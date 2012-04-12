@@ -16,8 +16,8 @@ isvaluetype=(o) -> isbool(o) or isstr(o) or isnum(o)
 WAS_DICT = "WAS_DICT"
 
 class Box
-    constructor: (v) -> 
-        if isvaluetype(v) 
+    constructor: (v) ->
+        if isvaluetype(v)
             @value = v
         else
             throw "Can only box value types"
@@ -26,8 +26,22 @@ class Box
 class Var
     constructor: (@name) ->
 
-boxit = (elem) -> 
-    if isarray elem  
+class Tin
+    constructor: (name, node, varlist...) ->
+        @node = if node? then node else null
+        @varlist = if (isarray varlist) then varlist else null
+        @chainlength = 1
+        @name = name
+    isfree:()->!@node?
+    
+
+boxit = (elem,tinlist) ->
+    if elem instanceof Var
+        tinlist.push(new Tin( elem.name, null, null ))
+        return elem
+    else if elem instanceof Box
+        return elem
+    else if isarray elem
         return (boxit(item) for item in elem)
     else if isobj elem
         a = []
@@ -40,7 +54,14 @@ boxit = (elem) ->
     else
         throw "Don't understand the type of elem"
 
-b2s = (boxed) -> 
-    
+# create the relevant tins
+init = (elems...) ->
+    out = []
+    for elem of elems
+        tinlist = []
+        tree = boxit(elem,tinlist)
+        headtin = new Tin( null, tree, tinlist... )
+        out.push([tree, headtin])
+    return out
 
 console.log(boxit( {a:[1,2,3]}  ))
