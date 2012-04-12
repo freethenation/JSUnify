@@ -65,6 +65,24 @@ boxit = (elem,tinlist) ->
     else
         throw "Don't understand the type of elem"
 
+# Unbox the result and get back plain JS
+unboxit = (tree) ->
+    # log "Unboxing tree #{tree}"
+    if isarray tree
+        if tree[tree.length-1] == WAS_DICT #TODO: Check bounds
+            hash = new Object()
+            for e in tree[0...tree.length-1]
+                hash[unboxit(e[0])] = unboxit(e[1])
+            return hash
+        else
+            return (unboxit(item) for item in tree)
+    else if tree instanceof Box
+        return tree.value
+    else if tree instanceof Var
+        return tree
+    else
+        throw "Unrecognized type '#{typeof(tree)}' in unboxit"
+
 # create the relevant tins
 init = (elems...) ->
     out = []
@@ -132,7 +150,7 @@ unify = (n1,v1,n2,v2) ->
             return 0 if n1.length != n2.length
             for idx in (num for num in [0..n1.length])
                 return 0 if unify(n1[idx],v1,n2[idx],v2) == 0
-        
+    return 1 
 
 # TODO: Make this work for N expressions
 unify_tins = (headtins) ->
@@ -140,7 +158,8 @@ unify_tins = (headtins) ->
     ht2 = headtins[1]
     return unify(ht1.node,ht1.varlist,ht2.node,ht2.varlist)
 
-# stupid slow implemention to get a variable's binding
+# (a bit less) stupid slow implemention to get a variable's binding
+# would be more elegant to rewrite the Var case to use get_tin from the start
 get_value = (headtins, var_name) ->
     for headtin in headtins
         for vartin in headtin.varlist
@@ -150,10 +169,17 @@ get_value = (headtins, var_name) ->
                 else if vartin.node instanceof Box
                     return vartin.node
                 else if vartin.node instanceof Var
-                    return get_value(headtins, vartin.node.name)
+                    node = vartin.node
+                    vlist = vartin.varlist
+                    while node instanceof Var
+                        t = get_tin(vlist,node)
+                        node = t.node
+                        vlist = t.varlist
+                else if isarray(vartin.node) or isobj(vartin.node)
+                    return vartin.node
                 else
-                    throw "WTF?"
-                    
-ht = init( {a: [1,2,3]}, {a: [1,new Var("b"),3]} ) 
-console.log unify_tins( ht )
-log get_value(ht, "b")
+                    throw "Unknown type in get_value"
+ 
+ht = init( {a: [1,{},3]}, {a: [1,new Var("b"),3]} ) 
+console.log unify_tins( ht ) and "unification succeeded!" or "unification failed"
+log unboxit( get_value(ht, "b") )
