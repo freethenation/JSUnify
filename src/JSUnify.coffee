@@ -43,11 +43,10 @@ class Tin
         @chainlength = 1
         @name = name
     isfree:()->!@node?
-    
 
 boxit = (elem,tinlist) ->
     if elem instanceof Var
-        tinlist.push(new Tin( elem.name, null, null ))
+        tinlist?.push(new Tin( elem.name, null, null ))
         return elem
     else if elem instanceof Box
         return elem
@@ -62,17 +61,20 @@ boxit = (elem,tinlist) ->
     else if isvaluetype elem
         return new Box elem
     else
-        throw "Don't understand the type of elem" 
+        throw "Don't understand the type of elem"
 
 # create the relevant tins
 init = (elems...) ->
     out = []
-    for elem of elems
+    for elem in elems
         tinlist = []
         tree = boxit(elem,tinlist)
         headtin = new Tin( null, tree, tinlist... )
-        out.push([tree, headtin])
+        out.push(headtin)
     return out
 
-log boxit( {a:[1,2,3]} )
-log b2s(boxit( {a:[1,2,3]} ))
+log boxit( {a:[1,2,3]},[] )
+log b2s(boxit( {a:[1,2,3]},[] ))
+
+log (init( {a: [1,2,3]}, {a: [1,new Var("b"),3]} ))
+
