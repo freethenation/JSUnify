@@ -25,7 +25,7 @@ class Box
 class Var
     constructor: (@name) ->
 
-boxit: (elem) -> 
+boxit = (elem) -> 
     if isarray elem  
         return (boxit sube for sube in elem)
     else if isobj elem
@@ -37,3 +37,4 @@ boxit: (elem) ->
     else
         throw "Don't understand the type of elem"
 
+boxit({a:"b",c:[1,2,3]})
