@@ -21,20 +21,26 @@ class Box
             @value = v
         else
             throw "Can only box value types"
+    toString: () -> "Box({0})".format(@value)
 
 class Var
     constructor: (@name) ->
 
 boxit = (elem) -> 
     if isarray elem  
-        return (boxit sube for sube in elem)
+        return (boxit(item) for item in elem)
     else if isobj elem
-        a = ([boxit(key), boxit(elem[key])] for key in elem)
+        a = []
+        for key of elem
+            a.push( [boxit(key), boxit(elem[key])] )
         a.push(WAS_DICT)
         return a.sort()
     else if isvaluetype elem
-        return Box elem
+        return new Box elem
     else
         throw "Don't understand the type of elem"
 
-boxit({a:"b",c:[1,2,3]})
+b2s = (boxed) -> 
+    
+
+console.log(boxit( {a:[1,2,3]}  ))
