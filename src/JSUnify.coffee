@@ -1,4 +1,5 @@
 # utils
+log=(o)->console.log o
 str=(o)->o.toString()
 String.prototype.format = (args...)->
 	@replace(new RegExp("{(\d+)}", "g"), (match, number) -> if typeof args[number] != 'undefined' then args[number] else match )
@@ -11,7 +12,16 @@ isstr=(o) -> typeof o == "string"
 isnum=(o) -> typeof o == "number"
 isobj=(o) -> typeof o == "object"
 isvaluetype=(o) -> isbool(o) or isstr(o) or isnum(o)
-
+    
+b2s = (elem) ->
+    if isarray elem
+        arrEle = (b2s e for e in elem).join(",")
+        return "[#{ arrEle }]"
+    else if elem instanceof Box
+        return elem.value
+    else
+        return str(elem)
+    
 # metadata to indicate this was a dictionary
 WAS_DICT = "WAS_DICT"
 
@@ -21,7 +31,7 @@ class Box
             @value = v
         else
             throw "Can only box value types"
-    toString: () -> "Box({0})".format(@value)
+    toString: () -> "Box(#{ @value })"
 
 class Var
     constructor: (@name) ->
@@ -52,7 +62,7 @@ boxit = (elem,tinlist) ->
     else if isvaluetype elem
         return new Box elem
     else
-        throw "Don't understand the type of elem"
+        throw "Don't understand the type of elem" 
 
 # create the relevant tins
 init = (elems...) ->
@@ -64,4 +74,5 @@ init = (elems...) ->
         out.push([tree, headtin])
     return out
 
-console.log(boxit( {a:[1,2,3]}  ))
+log boxit( {a:[1,2,3]} )
+log b2s(boxit( {a:[1,2,3]} ))
