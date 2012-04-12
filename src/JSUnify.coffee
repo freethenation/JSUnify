@@ -35,6 +35,7 @@ class Box
 
 class Var
     constructor: (@name) ->
+    toString: () -> "Var(#{ @name })"
 
 class Tin
     constructor: (name, node, varlist...) ->
@@ -43,6 +44,7 @@ class Tin
         @chainlength = 1
         @name = name
     isfree:()->!@node?
+    toString: () -> "Tin(#{ @name })"
 
 boxit = (elem,tinlist) ->
     if elem instanceof Var
@@ -51,11 +53,11 @@ boxit = (elem,tinlist) ->
     else if elem instanceof Box
         return elem
     else if isarray elem
-        return (boxit(item) for item in elem)
+        return (boxit(item,tinlist) for item in elem)
     else if isobj elem
         a = []
         for key of elem
-            a.push( [boxit(key), boxit(elem[key])] )
+            a.push( [boxit(key,tinlist), boxit(elem[key],tinlist)] )
         a.push(WAS_DICT)
         return a.sort()
     else if isvaluetype elem
@@ -73,8 +75,85 @@ init = (elems...) ->
         out.push(headtin)
     return out
 
-log boxit( {a:[1,2,3]},[] )
-log b2s(boxit( {a:[1,2,3]},[] ))
+get_tin = (varlist,node) ->
+    throw "Node must be a Var to get_tin" if not node instanceof Var
+    for v in varlist
+        if v.name == node.name
+            return v
+    throw "Couldn't find node #{node.name} in varlist #{varlist}"
 
-log (init( {a: [1,2,3]}, {a: [1,new Var("b"),3]} ))
+bind = (t1,t2) ->
+    log "Binding #{t1} and #{t2}"
+    if not t1.isfree and not t2.isfree
+        return false
+    else if t1.isfree and not t2.isfree
+        t1.node = t2.node
+        t1.varlist = t2.varlist
+    else if not t1.isfree and t2.isfree
+        t2.node = t1.node
+        t2.varlist = t1.varlist
+    else if t1.chainlength > t2.chainlength
+        t1.node = t2.node
+        t1.varlist = t2.varlist
+    else
+        t2.node = t1.node
+        t2.varlist = t1.varlist
+    return true
 
+# unification!
+unify = (n1,v1,n2,v2) ->
+    log "#{n1} -> #{n2}"
+    return 1 if n1 == undefined and n2 == undefined
+    return 1 if n1 == null and n2 == null
+    return 0 if n1 == null or n2 == null
+    if n1 instanceof Var and n2 instanceof Var
+        t1 = get_tin(v1, n1)
+        t2 = get_tin(v2, n2)
+        if not bind(t1,t2)
+            return 0 if unify(t1.node, t1.varlist, t2.node, t2.varlist) == 0
+    else if n1 instanceof Var
+        t1 = get_tin(v1,n1)
+        if t1.isfree
+            t1.node = n2
+            t1.varlist = v2
+        else
+            return 0 if unify(t1.node,t1.varlist,n2,v2)
+    else if n2 instanceof Var
+        t2 = get_tin(v2,n2)
+        if t2.isfree
+            t2.node = n1
+            t2.varlist = v1
+        else
+            return 0 if unify(t2.node,t2.varlist,n1,v1)
+    else
+        if n1 instanceof Box and n2 instanceof Box and isvaluetype(n1.value) and isvaluetype(n2.value) 
+            return if n1.value != n2.value then 0 else 1
+        else if isarray(n1) and isarray(n2)
+            return 0 if n1.length != n2.length
+            for idx in (num for num in [0..n1.length])
+                return 0 if unify(n1[idx],v1,n2[idx],v2) == 0
+        
+
+# TODO: Make this work for N expressions
+unify_tins = (headtins) ->
+    ht1 = headtins[0]
+    ht2 = headtins[1]
+    return unify(ht1.node,ht1.varlist,ht2.node,ht2.varlist)
+
+# stupid slow implemention to get a variable's binding
+get_value = (headtins, var_name) ->
+    for headtin in headtins
+        for vartin in headtin.varlist
+            if vartin.name == var_name
+                if not vartin.node? or vartin.node == null
+                    return null
+                else if vartin.node instanceof Box
+                    return vartin.node
+                else if vartin.node instanceof Var
+                    return get_value(headtins, vartin.node.name)
+                else
+                    throw "WTF?"
+                    
+ht = init( {a: [1,2,3]}, {a: [1,new Var("b"),3]} ) 
+console.log unify_tins( ht )
+log get_value(ht, "b")
