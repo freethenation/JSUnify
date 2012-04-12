@@ -10,7 +10,7 @@ isarray=(o) -> o? && Array.isArray o
 isstr=(o) -> typeof o == "string"
 isnum=(o) -> typeof o == "number"
 isobj=(o) -> typeof o == "object"
-isvaluetype(o) -> isbool(o) or isstr(o) or isnum(o)
+isvaluetype=(o) -> isbool(o) or isstr(o) or isnum(o)
 
 # metadata to indicate this was a dictionary
 WAS_DICT = "WAS_DICT"
