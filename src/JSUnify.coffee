@@ -10,7 +10,7 @@ isbool=(o) -> typeof o == "boolean"
 isarray=(o) -> o? && Array.isArray o
 isstr=(o) -> typeof o == "string"
 isnum=(o) -> typeof o == "number"
-isobj=(o) -> typeof o == "object"
+isobj=(o) -> not isarray(o) and typeof o == "object"
 isvaluetype=(o) -> isbool(o) or isstr(o) or isnum(o)
     
 b2s = (elem) ->
