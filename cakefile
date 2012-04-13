@@ -6,9 +6,9 @@ fs = require 'fs'
 
 build = (callback, from, to, watch) ->
     if watch? && watch == true
-        coffee = spawn 'coffee.bat', ['-w','-c', '-o', to, from]
+        coffee = spawn 'coffee', ['-w','-c', '-o', to, from]
     else
-        coffee = spawn 'coffee.bat', ['-c', '-o', to, from]
+        coffee = spawn 'coffee', ['-c', '-o', to, from]
     coffee.stderr.on 'data', (data) ->
         process.stderr.write data.toString()
     coffee.stdout.on 'data', (data) ->
