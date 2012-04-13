@@ -1,7 +1,6 @@
 #TODO:
 #   1) Make a version of Unify that returns (unboxed) bindings
 #   2) Support for _ and _:_
-#   3) Expose Var so you can actually use Unify extern :)
 #   4) Verify that u(a,b) && u(b,c) && u(c,d) === u(a,b,c,d)
 #   5) Clean up functions?
 #   6) Make WAS_DICT a better thing - maybe an internal object and use instanceof?
@@ -93,6 +92,9 @@ unboxit = (tree) ->
 
 # create the relevant tins
 parse = (elems...) ->
+    # Allow either multiple entries or lists
+    elems = elems[0] if elems.length == 1 else elems
+
     out = []
     for elem in elems
         tinlist = []
@@ -207,7 +209,9 @@ get_value = (headtins, var_name) ->
  # export functions so they are visible outside of this file
  extern "parse", parse
  extern "unify", unify
- 
+ extern "get_value", get_value
+ extern "Var", Var
+
 # ht = parse( {a: [1,{},3]}, {a: [1,new Var("b"),3]} ) 
 # log unify(ht) and "unification succeeded!" or "unification failed"
 # log unboxit( get_value(ht, "b") )

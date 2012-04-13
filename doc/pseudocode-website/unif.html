@@ -1,0 +1,255 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 3//EN">
+<HTML><HEAD>
+<TITLE>An efficient linear unification algorithm</title>
+<!-- begin header records  ========================================== -->
+<!-- /afs/rchland.ibm.com/usr1/henckel/temp/vm/unif.submittd          -->
+<!-- converted by b2h r3.0 (300) (aix) on 16 apr 1997 at 09:43:35     -->
+<meta http-equiv="updated"  content="thu, 06 feb 1997 21:25:02">
+<meta http-equiv="review"  content="fri, 06 feb 1998 21:25:02">
+<meta http-equiv="expires"  content="sat, 06 feb 1999 21:25:02">
+</head><body>
+<script type='text/javascript' src='/js/header.js'>
+</script>
+
+
+<!-- end header records  ============================================ -->
+
+<a name=top_of_page></a>
+<h1>An efficient linear unification algorithm</h1>
+<p>
+by John Henckel, 6 Feb 1997  (public domain)
+
+<HR><H2><A NAME=ToC>Table of Contents</A></H2>
+<A NAME=ToC_1 HREF="#Header_1" >Problem</A><BR>
+<A NAME=ToC_2 HREF="#Header_2" >Solution</A><BR>
+<A NAME=ToC_3 HREF="#Header_3" >References</A><BR>
+<A NAME=ToC_3 HREF="#Header_4" >Source Code</A><BR>
+<HR><P>
+<P>
+<H2><A NAME="Header_1" HREF="#ToC_1">Problem</A></H2>
+<P>
+Unification is a basic operation in many symbolic artificial intelligence
+systems.  Unification is, given two first-order terms, find a substitution
+of the variables in the terms so that they become identical.  Reference (1)
+gives a good introduction to unification and gives textbook algorithm for
+finding the most general unifier.  The problem is that this algorithm has
+exponential worse case complexity.  Other algorithms are known that have
+linear worse case complexity (2) but these are very complicated to
+implement.
+<HR>
+<H2><A NAME="Header_2" HREF="#ToC_2">Solution</A></H2>
+<P>
+I am implementing a resolution theorem proving program for a class project
+and I wrote a unification algorithm which has linear complexity, I think.
+It is easy to implement, and it has a number of extra benefits.
+I will use the following example.  Assume w,x,y,z are variables and we
+want to unify f(x,t(x),z) and f(a,y,h(w,y)).  First convert the
+terms to tree structure as follows
+
+<p>
+<img src=unif0.png>
+<p>
+
+<!--
+<PRE>
+
+  tree1   tree2
+   f       f
+   |       |
+   1-t-2   a-1-h
+     |         |
+     1         2-1
+</PRE>
+-->
+
+In the trees each variable is replaced by a number unique in the term.
+These trees are READ ONLY, they are not changed by the unification
+process and they can be refered to by many term instances in the database.
+This structure sharing saves a lot of storage in the theorem
+proving program.
+
+<P>
+The unification program works on term instances (tins).  A tin has
+a pointer to a tree, and a pointer to a variable list.  The
+size of the variable list depends on the number of variables in the
+tree.  (in the example both trees have two variables).  The variable
+list is actually an array of tins.  The tins in the var list
+have two pointers also, if both of these are null, we say the tin
+is free, or unbound.
+
+<P>
+The two tins for the example would be:
+
+<p>
+<img src=unif1.png>
+<p>
+<!--
+<PRE>
+        tree1                     tree2
+          |                         |
+ tin1:   (++)--(**)(**)     tin2:  (++)--(**)(**)
+</PRE>
+-->
+
+that is they both have a head tin that points to the structure tree
+and to a list of free tins size 2.
+<P>
+The unification procedure is recursive, it walks the structure trees
+pointed to by the two terms.  It returns 1=unify was successful or
+0=unify failed.
+
+<P>
+<PRE>
+procedure unify(n1,v1,n2,v2)
+  n1 and n2 are nodes in the structure trees.
+  v1 and v2 are variable lists corresponding to current instances
+     of the trees.
+begin
+  if n1 and n2 are both null return 1
+  if either is null return 0
+  if n1 and n2 are variables then
+    let t1 = lookup the binding of n1 in v1       (*1*)
+    let t2 = lookup the binding of n2 in v2
+    if t1 and t2 both are free then
+      bind the one with the shorter chain to the one with the longer chain
+    else
+    if only one is free then
+      bind the free one to the bound one
+    else
+    if both are bound then try to unify them,
+      call unify(t1.node,t1.varlist,t2.node,t2.varlist)
+  endif
+  else
+  if only n1 is a variable then
+    let t1 = lookup the binding of n1 in v1
+    if the t1 is free then bind it,
+      set t1.node = n2 and t1.varlist = v2
+    else
+      try to unify(t1.node, t1.varlist, n2,v2)
+  endif
+  else
+  if only n2 is a variable then
+    do analogous to when only n1 is a var
+  endif
+  else must be that neither is a variable
+    if n1 doesn't match n2 return 0
+    try to unify all the children of n1 with the children of n2,
+    unify(n1 child 1, v1, n2 child 1, v2)
+    unify(n1 child 2, v1, n2 child 2, v2)
+    unify(n1 child 3, v1, n2 child 3, v2)
+    unify(n1 child 4, v1, n2 child 4, v2)
+    ...
+  end
+endproc
+</PRE>
+
+<P>
+After running this procedure on the example, the tins look like this
+
+<p>
+<img src=unif2.png>
+<p>
+
+
+<!--
+<PRE>
+
+          ,----&gt;f ,--------.        ,-&gt;f
+          |     | v        |        |  |
+          |     1-t-2   --------------&gt;a-1-h
+          |       |    |   |        |     /|
+          |       1 ,--------------------' 2-1
+          |     .------+   |        |
+          |     |   |      ---------------.
+          |     |   |               |     |
+ tin1:   (++)--(++)(++)     tin2:  (++)--(++)(**)
+               A |   |                   A |
+               | -----------------------/  |
+               ----------------------------+
+</PRE>
+-->
+
+In this figure: Tin1 points to the f in the first tree and tin1 has two variables
+x and z in its varlist.  x has two pointers, a pointer to a structure and
+to a varlist, they point to the 'a' in tree2 and the varlist of tin2,
+respectively.  z points to the 'h' and to the same varlist in tin2.
+Tin2 has two variables also, y and w.  y is bound to 't' and points to
+varlist of tin1.  w is free.
+
+<P>
+The unification succeeded.  If we were to print the value of the variable
+z we would print z = h(w,t(a)).  To print the value of z we print the tree it
+points to using the varlist it points to lookup any variables that may
+occur in the tree and recursively print them.
+
+<P>
+This algorithm has worst case linear complexity.  Each recursive
+invocation of the unify function either dereferences a variable or
+moves to a new node in the structure tree.  If n is the number of nodes
+in the structure trees and m is the number of variables, unify will be
+called recursively at most n+m times.
+
+<P>
+There is one case that was not spelled out yet.  When two vars are free,
+as in (*1*), then one is shared to the other.  This is done using a special
+kind of "chain" tin in which the structure pointer is null and the varlist
+pointer points to the tin of the other variable.  When
+a term has many variables these chains can grow long.  For example when
+f(w,w,x,x,y,y,z) is unified with f(s,t,t,u,u,v,v), (assume s..z are vars)
+then first w chains to s, then t chains to w, then x chains to t, etc.
+When both vars are free, it doesn't matter which is chained to which.
+By carefully choosing which to chain, we can ensure that the length of
+the longest chain does not grow faster that O(log(n)) where n is the
+number of variables processed by unify.  These are the rules for
+chaining two free vars.
+<OL>
+<LI>if one of the vars has a chain longer than the other, link the
+shorter one to the longer.
+<LI>else always link the t1 var to t2 var, this ensures that the chain
+does not zig-zag between the terms.
+</OL>
+In my theorem prover program each time a variable is bound or shared,
+a pointer to it is added to a "changelist".  When unify is finished,
+I can quickly undo the effect of the unify by going though the changelist
+and setting all the tins it points to to "free" (two null pointers).
+<P>
+The benefits of using this algorithm are
+<OL>
+<li>it is time efficient:  linear worst case complexity
+<li>it is space efficient:  structures are shared by many term instances,
+no new memory needs to be allocated during unification, extra
+overhead is just two pointers per variable.
+<li>it is easy to add an un-unify feature to it by keeping a list of
+changes during unify.
+</OL>
+<HR>
+<H2><A NAME="Header_3" HREF="#ToC_3">References</A></H2>
+<P>
+<OL>
+<li>Genesereth, M., Nils Nilsson, Logical Foundations of Artificial
+Intelligence, Morgan Kaufmann Publishers, Inc., Los Altos, CA, 1986.
+<li>
+Paterson, M.S., and Wegman, M.N. Linear Unification, J. Comput. Syst.
+Sci. 16 (1978) pp 158-167.
+<li>
+Escalade-Imaz, G., Ghallab, M., A Practically Efficient and Almost Linear
+Unification Algorithm.  Artificial Intelligence, v36, 1988, 249-263.
+<li>The diagrams were made using Jan's excellent (free)
+<a href=http://jansfreeware.com>Diagram Editor</a>.
+</OL>
+
+<HR>
+<H2><A NAME="Header_4" HREF="#ToC_4">Source Code</A></H2>
+<P>
+The implementation of this unification algorithm is
+<a href=http://formulus.com/cgpp/src/TINN.C>here</a>, with all my
+<a href=http://formulus.com/cgpp/>master's project</a> source code also.
+<P>
+<A NAME=Bot_Of_Page></A>
+<hr>
+<center>
+<font face=arial size=1>
+<a href=http://formulus.com/fave.php>my favorite things</a>
+* <a href=mailto:john@formulus.com>contact me</a>
+
+</BODY></HTML>
