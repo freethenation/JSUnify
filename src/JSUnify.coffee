@@ -1,3 +1,12 @@
+#TODO:
+#   1) Make a version of Unify that returns (unboxed) bindings
+#   2) Support for _ and _:_
+#   3) Expose Var so you can actually use Unify extern :)
+#   4) Verify that u(a,b) && u(b,c) && u(c,d) === u(a,b,c,d)
+#   5) Clean up functions?
+#   6) Make WAS_DICT a better thing - maybe an internal object and use instanceof?
+#   7) Write unit tests
+
 # utils
 log=(o)->console.log o
 dir=(o)->console.dir o
@@ -6,11 +15,11 @@ window.JSUnify={}
 extern=(name, o)->window.JSUnify[name] = o
 b2s = (elem) -> return if isarray elem then "[#{ (b2s e for e in elem).join(',') }]" else str(elem)
 str=(o)->
-    if typeof o == "undefined" 
-        "undefined" 
-    else if o==null 
-        "null" 
-    else 
+    if typeof o == "undefined"
+        "undefined"
+    else if o==null
+        "null"
+    else
         o.toString()
 
 # type testing functions
@@ -149,18 +158,28 @@ _unify = (n1,v1,n2,v2) ->
             return 0 if n1.length != n2.length
             for idx in (num for num in [0..n1.length])
                 return 0 if _unify(n1[idx],v1,n2[idx],v2) == 0
-    return 1    
+    return 1
 
 # publicly visible unify function 
+# perhaps we should return a list of bindings instead of true?
 unify = (expressions...) ->
     success = 1
     expr = expressions
+    
+    # Lets you pass in an array without the splat notation
     expr = if expr.length <= 1 then expr[0] else expr
+    
+    # Automagically parse the expressions into Tins
+    # Realize, if you do this - you will never be able to get the bindings back (since these tins are discarded)
     expr = ((if e instanceof Tin then e else parse(e)[0]) for e in expr)
+
+    # Unify each expression with its neighbor
+    # u(a,b) && u(b,c) && u(c,d) ...
+    # TODO: Verify that there's no problem with this
     for i in [1...len(expr)]
         success = _unify(expr[i-1].node,expr[i-1].varlist,expr[i].node,expr[i].varlist)
         if success == 0 then return false
-    return true    
+    return true
     return
 
 # (a bit less) stupid slow implemention to get a variable's binding
