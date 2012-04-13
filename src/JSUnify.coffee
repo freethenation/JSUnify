@@ -1,6 +1,6 @@
 # utils
 log=(o)->console.log o
-str=(o)->o.toString()
+str=(o)->if typeof o == "undefined" then "undefined" else o.toString()
 String.prototype.format = (args...)->
 	@replace(new RegExp("{(\d+)}", "g"), (match, number) -> if typeof args[number] != 'undefined' then args[number] else match )
 String.prototype.repeat = (num)->new Array(num + 1).join(this)
@@ -17,8 +17,6 @@ b2s = (elem) ->
     if isarray elem
         arrEle = (b2s e for e in elem).join(",")
         return "[#{ arrEle }]"
-    else if elem instanceof Box
-        return elem.value
     else
         return str(elem)
     
@@ -120,7 +118,7 @@ bind = (t1,t2) ->
 
 # unification!
 unify = (n1,v1,n2,v2) ->
-    log "#{n1} -> #{n2}"
+    log "#{b2s n1} -> #{b2s n2}"
     return 1 if n1 == undefined and n2 == undefined
     return 1 if n1 == null and n2 == null
     return 0 if n1 == null or n2 == null
