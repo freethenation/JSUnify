@@ -3,7 +3,7 @@
 #   2) Support for _ and _:_
 #   4) Verify that u(a,b) && u(b,c) && u(c,d) === u(a,b,c,d)
 #   5) Clean up functions?
-#   6) Make WAS_DICT a better thing - maybe an internal object and use instanceof?
+#   6) Make WAS_DICT a better thing - maybe an internal object and use instanceof? RPK: That sounds like a good idea... make sure to override toString
 #   7) Write unit tests
 
 # utils
@@ -164,6 +164,8 @@ _unify = (n1,v1,n2,v2) ->
 
 # publicly visible unify function 
 # perhaps we should return a list of bindings instead of true?
+# RPK: I think we should return a list of headtins. This allows unify to be called multible times without reparseing
+#           Also this resolves the "you will never be able to get the bindings back" issue
 unify = (expressions) ->
     success = 1
     expr = expressions
@@ -186,6 +188,8 @@ unify = (expressions) ->
 
 # (a bit less) stupid slow implemention to get a variable's binding
 # would be more elegant to rewrite the Var case to use get_tin from the start
+# RPK: Variable names are scoped by tins. Variable "A" in tin1 is a different variable then variable "A" in tin2. 
+#       This should allow us to make this function alot more efficient. I can explain why vars are scoped as they are in person.
 _get_value = (headtins, var_name) ->
     for headtin in headtins
         for vartin in headtin.varlist
