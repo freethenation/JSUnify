@@ -91,9 +91,9 @@ unboxit = (tree) ->
         throw "Unrecognized type '#{typeof(tree)}' in unboxit"
 
 # create the relevant tins
-parse = (elems...) ->
-    # Allow either multiple entries or lists
-    elems = elems[0] if elems.length == 1 else elems
+parse = (elems) ->
+    # Allow either multiple entries or lists (without splat notation)
+    #    elems = if elems.length <= 1 then elems[0] else elems
 
     out = []
     for elem in elems
@@ -111,7 +111,7 @@ get_tin = (varlist,node) ->
     throw "Couldn't find node #{node.name} in varlist #{varlist}"
 
 bind = (t1,t2) ->
-    log "Binding #{t1} and #{t2}"
+    # log "Binding #{t1} and #{t2}"
     if not t1.isfree and not t2.isfree
         return false
     else if t1.isfree and not t2.isfree
@@ -130,7 +130,7 @@ bind = (t1,t2) ->
 
 # unification!
 _unify = (n1,v1,n2,v2) ->
-    log "#{b2s n1} -> #{b2s n2}"
+    # log "#{b2s n1} -> #{b2s n2}"
     return 1 if n1 == undefined and n2 == undefined
     return 1 if n1 == null and n2 == null
     return 0 if n1 == null or n2 == null
@@ -164,16 +164,16 @@ _unify = (n1,v1,n2,v2) ->
 
 # publicly visible unify function 
 # perhaps we should return a list of bindings instead of true?
-unify = (expressions...) ->
+unify = (expressions) ->
     success = 1
     expr = expressions
     
     # Lets you pass in an array without the splat notation
-    expr = if expr.length <= 1 then expr[0] else expr
+    #expr = if expr.length <= 1 then expr[0] else expr
     
     # Automagically parse the expressions into Tins
     # Realize, if you do this - you will never be able to get the bindings back (since these tins are discarded)
-    expr = ((if e instanceof Tin then e else parse(e)[0]) for e in expr)
+    expr = ((if e instanceof Tin then e else parse([e])[0]) for e in expr)
 
     # Unify each expression with its neighbor
     # u(a,b) && u(b,c) && u(c,d) ...
@@ -186,7 +186,7 @@ unify = (expressions...) ->
 
 # (a bit less) stupid slow implemention to get a variable's binding
 # would be more elegant to rewrite the Var case to use get_tin from the start
-get_value = (headtins, var_name) ->
+_get_value = (headtins, var_name) ->
     for headtin in headtins
         for vartin in headtin.varlist
             if vartin.name == var_name
@@ -205,7 +205,10 @@ get_value = (headtins, var_name) ->
                     return vartin.node
                 else
                     throw "Unknown type in get_value"
-                    
+get_value = (headtins, var_name) ->
+    boxxed = _get_value(headtins, var_name)
+    return unboxit(boxxed)
+
  # export functions so they are visible outside of this file
  extern "parse", parse
  extern "unify", unify
@@ -216,4 +219,4 @@ get_value = (headtins, var_name) ->
 # log unify(ht) and "unification succeeded!" or "unification failed"
 # log unboxit( get_value(ht, "b") )
 
-log unify({a: [1,{},3]}, {a: [1,new Var("b"),3]}) and "unification succeeded!" or "unification failed"
+log unify([{a: [1,{},3]}, {a: [1,new Var("b"),3]}]) and "unification succeeded!" or "unification failed"
