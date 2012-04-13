@@ -1,9 +1,17 @@
 # utils
 log=(o)->console.log o
-str=(o)->if typeof o == "undefined" then "undefined" else o.toString()
-String.prototype.format = (args...)->
-	@replace(new RegExp("{(\d+)}", "g"), (match, number) -> if typeof args[number] != 'undefined' then args[number] else match )
-String.prototype.repeat = (num)->new Array(num + 1).join(this)
+dir=(o)->console.dir o
+len=(o)-> o.length
+window.JSUnify={}
+extern=(name, o)->window.JSUnify[name] = o
+b2s = (elem) -> return if isarray elem then "[#{ (b2s e for e in elem).join(',') }]" else str(elem)
+str=(o)->
+    if typeof o == "undefined" 
+        "undefined" 
+    else if o==null 
+        "null" 
+    else 
+        o.toString()
 
 # type testing functions
 isbool=(o) -> typeof o == "boolean"
@@ -12,13 +20,6 @@ isstr=(o) -> typeof o == "string"
 isnum=(o) -> typeof o == "number"
 isobj=(o) -> not isarray(o) and typeof o == "object"
 isvaluetype=(o) -> isbool(o) or isstr(o) or isnum(o)
-    
-b2s = (elem) ->
-    if isarray elem
-        arrEle = (b2s e for e in elem).join(",")
-        return "[#{ arrEle }]"
-    else
-        return str(elem)
     
 # metadata to indicate this was a dictionary
 WAS_DICT = "WAS_DICT"
@@ -82,7 +83,7 @@ unboxit = (tree) ->
         throw "Unrecognized type '#{typeof(tree)}' in unboxit"
 
 # create the relevant tins
-init = (elems...) ->
+parse = (elems...) ->
     out = []
     for elem in elems
         tinlist = []
@@ -117,7 +118,7 @@ bind = (t1,t2) ->
     return true
 
 # unification!
-unify = (n1,v1,n2,v2) ->
+_unify = (n1,v1,n2,v2) ->
     log "#{b2s n1} -> #{b2s n2}"
     return 1 if n1 == undefined and n2 == undefined
     return 1 if n1 == null and n2 == null
@@ -126,35 +127,41 @@ unify = (n1,v1,n2,v2) ->
         t1 = get_tin(v1, n1)
         t2 = get_tin(v2, n2)
         if not bind(t1,t2)
-            return 0 if unify(t1.node, t1.varlist, t2.node, t2.varlist) == 0
+            return 0 if _unify(t1.node, t1.varlist, t2.node, t2.varlist) == 0
     else if n1 instanceof Var
         t1 = get_tin(v1,n1)
         if t1.isfree
             t1.node = n2
             t1.varlist = v2
         else
-            return 0 if unify(t1.node,t1.varlist,n2,v2)
+            return 0 if _unify(t1.node,t1.varlist,n2,v2)
     else if n2 instanceof Var
         t2 = get_tin(v2,n2)
         if t2.isfree
             t2.node = n1
             t2.varlist = v1
         else
-            return 0 if unify(t2.node,t2.varlist,n1,v1)
+            return 0 if _unify(t2.node,t2.varlist,n1,v1)
     else
         if n1 instanceof Box and n2 instanceof Box and isvaluetype(n1.value) and isvaluetype(n2.value) 
             return if n1.value != n2.value then 0 else 1
         else if isarray(n1) and isarray(n2)
             return 0 if n1.length != n2.length
             for idx in (num for num in [0..n1.length])
-                return 0 if unify(n1[idx],v1,n2[idx],v2) == 0
-    return 1 
+                return 0 if _unify(n1[idx],v1,n2[idx],v2) == 0
+    return 1    
 
-# TODO: Make this work for N expressions
-unify_tins = (headtins) ->
-    ht1 = headtins[0]
-    ht2 = headtins[1]
-    return unify(ht1.node,ht1.varlist,ht2.node,ht2.varlist)
+# publicly visible unify function 
+unify = (expressions...) ->
+    success = 1
+    expr = expressions
+    expr = if expr.length <= 1 then expr[0] else expr
+    expr = ((if e instanceof Tin then e else parse(e)[0]) for e in expr)
+    for i in [1...len(expr)]
+        success = _unify(expr[i-1].node,expr[i-1].varlist,expr[i].node,expr[i].varlist)
+        if success == 0 then return false
+    return true    
+    return
 
 # (a bit less) stupid slow implemention to get a variable's binding
 # would be more elegant to rewrite the Var case to use get_tin from the start
@@ -177,7 +184,13 @@ get_value = (headtins, var_name) ->
                     return vartin.node
                 else
                     throw "Unknown type in get_value"
+                    
+ # export functions so they are visible outside of this file
+ extern "parse", parse
+ extern "unify", unify
  
-ht = init( {a: [1,{},3]}, {a: [1,new Var("b"),3]} ) 
-console.log unify_tins( ht ) and "unification succeeded!" or "unification failed"
-log unboxit( get_value(ht, "b") )
+# ht = parse( {a: [1,{},3]}, {a: [1,new Var("b"),3]} ) 
+# log unify(ht) and "unification succeeded!" or "unification failed"
+# log unboxit( get_value(ht, "b") )
+
+log unify({a: [1,{},3]}, {a: [1,new Var("b"),3]}) and "unification succeeded!" or "unification failed"
