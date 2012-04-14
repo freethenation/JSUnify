@@ -12,7 +12,6 @@ dir=(o)->console.dir o
 len=(o)-> o.length
 window.JSUnify={}
 extern=(name, o)->window.JSUnify[name] = o
-b2s = (elem) -> return if isarray elem then "[#{ (b2s e for e in elem).join(',') }]" else str(elem)
 str=(o)->
     if typeof o == "undefined"
         "undefined"
@@ -29,7 +28,16 @@ isstr=(o) -> typeof o == "string"
 isnum=(o) -> typeof o == "number"
 isobj=(o) -> not isarray(o) and typeof o == "object"
 isvaluetype=(o) -> isbool(o) or isstr(o) or isnum(o)
-    
+
+# util functions to convert various data types to strings
+tinNode2s=(elem) ->
+    if isarray elem 
+        return "[#{ (tinNode2s e for e in elem).join(',') }]" 
+    else 
+        return str(elem)
+tinVars2s=(vars) ->
+    return null # RPK: not implmented yet
+
 # metadata to indicate this was a dictionary
 WAS_DICT = "WAS_DICT"
 
@@ -52,7 +60,7 @@ class Tin
         @chainlength = 1
         @name = name
     isfree:()->!@node?
-    toString: () -> "Tin(#{ @name })"
+    toString:() -> "Tin(#{ @name }, #{ tinNode2s @node }, #{ tinVars2s @varlist})"
 
 boxit = (elem,tinlist) ->
     if elem instanceof Var
@@ -77,7 +85,7 @@ boxit = (elem,tinlist) ->
 unboxit = (tree) ->
     # log "Unboxing tree #{tree}"
     if isarray tree
-        if tree[tree.length-1] == WAS_DICT #TODO: Check bounds
+        if tree[tree.length-1] == WAS_DICT # TODO: Check bounds
             hash = new Object()
             for e in tree[0...tree.length-1]
                 hash[unboxit(e[0])] = unboxit(e[1])
@@ -219,7 +227,6 @@ get_value = (headtins, var_name) ->
  extern "unify", unify
  extern "get_value", get_value
  extern "Var", Var
- extern "b2s", b2s # RPK: this is temp for debugging
 
 # ht = parse( {a: [1,{},3]}, {a: [1,new Var("b"),3]} ) 
 # log unify(ht) and "unification succeeded!" or "unification failed"
