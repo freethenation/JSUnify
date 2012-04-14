@@ -3,7 +3,6 @@
 #   2) Support for _ and _:_
 #   4) Verify that u(a,b) && u(b,c) && u(c,d) === u(a,b,c,d)
 #   5) Clean up functions?
-#   6) Make WAS_DICT a better thing - maybe an internal object and use instanceof? RPK: That sounds like a good idea... make sure to override toString
 #   7) Write unit tests
 
 # utils
@@ -41,7 +40,9 @@ tinVars2s=(vars) ->
     return null # RPK: not implmented yet
 
 # metadata to indicate this was a dictionary
-WAS_DICT = "WAS_DICT"
+class DictFlag
+    toString: () -> "new DictFlag()"
+DICT_FLAG = new DictFlag()
 
 class Box
     constructor: (v) ->
@@ -49,11 +50,11 @@ class Box
             @value = v
         else
             throw "Can only box value types"
-    toString: () -> "Box(#{ toJson(@value) })"
+    toString: () -> "new Box(#{ toJson(@value) })"
 
 class Var
     constructor: (@name) ->
-    toString: () -> "Var(#{ @name })"
+    toString: () -> "new Var(#{ @name })"
 
 class Tin
     constructor: (name, node, varlist...) ->
@@ -62,7 +63,7 @@ class Tin
         @chainlength = 1
         @name = name
     isfree:()->!@node?
-    toString:() -> "Tin(#{ @name }, #{ toJson @node }, #{ tinVars2s @varlist})"
+    toString:() -> "new Tin(#{ @name }, #{ toJson @node }, #{ tinVars2s @varlist})"
 
 boxit = (elem,tinlist) ->
     if elem instanceof Var
@@ -76,7 +77,7 @@ boxit = (elem,tinlist) ->
         a = []
         for key of elem
             a.push( [boxit(key,tinlist), boxit(elem[key],tinlist)] )
-        a.push(WAS_DICT)
+        a.push(DICT_FLAG)
         return a.sort()
     else if isvaluetype elem
         return new Box elem
@@ -87,7 +88,7 @@ boxit = (elem,tinlist) ->
 unboxit = (tree) ->
     # log "Unboxing tree #{tree}"
     if isarray tree
-        if tree[tree.length-1] == WAS_DICT # TODO: Check bounds
+        if tree[tree.length-1] == DICT_FLAG # TODO: Check bounds
             hash = new Object()
             for e in tree[0...tree.length-1]
                 hash[unboxit(e[0])] = unboxit(e[1])
@@ -229,6 +230,8 @@ get_value = (headtins, var_name) ->
  extern "unify", unify
  extern "get_value", get_value
  extern "Var", Var
+ extern "Tin", Tin
+ extern "Box", Box
 
 # ht = parse( {a: [1,{},3]}, {a: [1,new Var("b"),3]} ) 
 # log unify(ht) and "unification succeeded!" or "unification failed"
