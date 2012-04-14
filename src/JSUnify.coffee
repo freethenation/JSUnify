@@ -30,9 +30,11 @@ isobj=(o) -> not isarray(o) and typeof o == "object"
 isvaluetype=(o) -> isbool(o) or isstr(o) or isnum(o)
 
 # util functions to convert various data types to strings
-tinNode2s=(elem) ->
+toJson=(elem) ->
     if isarray elem 
-        return "[#{ (tinNode2s e for e in elem).join(',') }]" 
+        return "[#{ (toJson e for e in elem).join(',') }]" 
+    else if isstr elem
+        return "\"#{ elem }\""
     else 
         return str(elem)
 tinVars2s=(vars) ->
@@ -47,7 +49,7 @@ class Box
             @value = v
         else
             throw "Can only box value types"
-    toString: () -> "Box(#{ @value })"
+    toString: () -> "Box(#{ toJson(@value) })"
 
 class Var
     constructor: (@name) ->
@@ -60,7 +62,7 @@ class Tin
         @chainlength = 1
         @name = name
     isfree:()->!@node?
-    toString:() -> "Tin(#{ @name }, #{ tinNode2s @node }, #{ tinVars2s @varlist})"
+    toString:() -> "Tin(#{ @name }, #{ toJson @node }, #{ tinVars2s @varlist})"
 
 boxit = (elem,tinlist) ->
     if elem instanceof Var
