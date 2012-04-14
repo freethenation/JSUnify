@@ -1,4 +1,4 @@
-#TODO:
+# TODO:
 #   1) Make a version of Unify that returns (unboxed) bindings
 #   2) Support for _ and _:_
 #   4) Verify that u(a,b) && u(b,c) && u(c,d) === u(a,b,c,d)
@@ -22,6 +22,7 @@ str=(o)->
         o.toString()
 
 # type testing functions
+isundef=(o) -> typeof o == "undefined"
 isbool=(o) -> typeof o == "boolean"
 isarray=(o) -> o? && Array.isArray o
 isstr=(o) -> typeof o == "string"
@@ -218,9 +219,10 @@ get_value = (headtins, var_name) ->
  extern "unify", unify
  extern "get_value", get_value
  extern "Var", Var
+ extern "b2s", b2s # RPK: this is temp for debugging
 
 # ht = parse( {a: [1,{},3]}, {a: [1,new Var("b"),3]} ) 
 # log unify(ht) and "unification succeeded!" or "unification failed"
 # log unboxit( get_value(ht, "b") )
 
-log unify([{a: [1,{},3]}, {a: [1,new Var("b"),3]}]) and "unification succeeded!" or "unification failed"
+# log unify([{a: [1,{},3]}, {a: [1,new Var("b"),3]}]) and "unification succeeded!" or "unification failed"
