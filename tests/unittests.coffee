@@ -3,9 +3,14 @@ runtests=()->
         window[prop] = JSUnify[prop]
         
     module "parse"
-    test "parse array", ()->
-        res = parse([{a: [1,{},3]}])[0].node
-        # deepEqual(res, 
+    test "simple parse Tin.node test", ()->
+        res = parse([{a: [1,{},"r"]}])[0].node
+        deepEqual(res, [[new Box("a"),[new Box(1),[new DictFlag()],new Box("r")]],new DictFlag()])
+        
+    module "unify"
+    test "simple black box unify test", () ->
+        ok(unify([{a: [1,{},3]}, {a: [1,new Var("b"),3]}]))
+
 
 # utils
 log=(o)->console.log o

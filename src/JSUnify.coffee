@@ -233,6 +233,7 @@ get_value = (headtins, var_name) ->
  extern "Tin", Tin
  extern "Box", Box
  extern "DictFlag", DictFlag
+ extern "toJson", toJson
 
 # ht = parse( {a: [1,{},3]}, {a: [1,new Var("b"),3]} ) 
 # log unify(ht) and "unification succeeded!" or "unification failed"
