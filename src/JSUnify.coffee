@@ -56,9 +56,9 @@ class Var
     toString: () -> "Var(#{ @name })"
 
 class Tin
-    constructor: (name, node, varlist...) ->
+    constructor: (name, node, varlist) ->
         @node = if node? then node else null
-        @varlist = if (isarray varlist) then varlist else null
+        @varlist = if (isobj varlist) then varlist else null
         @chainlength = 1
         @name = name
     isfree:()->!@node?
@@ -66,7 +66,7 @@ class Tin
 
 boxit = (elem,tinlist) ->
     if elem instanceof Var
-        tinlist?.push(new Tin( elem.name, null, null ))
+        tinlist?[elem.name] =  new Tin( elem.name, null, null )
         return elem
     else if elem instanceof Box
         return elem
@@ -108,17 +108,15 @@ parse = (elems) ->
 
     out = []
     for elem in elems
-        tinlist = []
+        tinlist = {}
         tree = boxit(elem,tinlist)
-        headtin = new Tin( null, tree, tinlist... )
+        headtin = new Tin( null, tree, tinlist )
         out.push(headtin)
     return out
 
 get_tin = (varlist,node) ->
     throw "Node must be a Var to get_tin" if not node instanceof Var
-    for v in varlist
-        if v.name == node.name
-            return v
+    return varlist[node.name] if varlist?[node.name]?
     throw "Couldn't find node #{node.name} in varlist #{varlist}"
 
 bind = (t1,t2) ->
@@ -201,28 +199,25 @@ unify = (expressions) ->
 # would be more elegant to rewrite the Var case to use get_tin from the start
 # RPK: Variable names are scoped by tins. Variable "A" in tin1 is a different variable then variable "A" in tin2. 
 #       This should allow us to make this function alot more efficient. I can explain why vars are scoped as they are in person.
-_get_value = (headtins, var_name) ->
-    for headtin in headtins
-        for vartin in headtin.varlist
-            if vartin.name == var_name
-                if not vartin.node? or vartin.node == null
-                    return null
-                else if vartin.node instanceof Box
-                    return vartin.node
-                else if vartin.node instanceof Var
-                    node = vartin.node
-                    vlist = vartin.varlist
-                    while node instanceof Var
-                        t = get_tin(vlist,node)
-                        node = t.node
-                        vlist = t.varlist
-                else if isarray(vartin.node) or isobj(vartin.node)
-                    return vartin.node
-                else
-                    throw "Unknown type in get_value"
-get_value = (headtins, var_name) ->
-    boxxed = _get_value(headtins, var_name)
-    return unboxit(boxxed)
+get_value = (headtin, var_name) ->
+    vartin = headtin.varlist[var_name]
+    if not vartin?
+        throw "Variable #{var_name} not in this tin"
+    else if not vartin.node? or vartin.node == null
+        return new Var(var_name)
+    else if vartin.node instanceof Box
+        return unboxit(vartin.node)
+    else if vartin.node instanceof Var
+        node = vartin.node
+        vlist = vartin.varlist
+        while node instanceof Var
+            t = get_tin(vlist,node)
+            node = t.node
+            vlist = t.varlist
+    else if isarray(vartin.node) or isobj(vartin.node)
+        return unboxit(vartin.node)
+    else
+        throw "Unknown type in get_value"
 
  # export functions so they are visible outside of this file
  extern "parse", parse
