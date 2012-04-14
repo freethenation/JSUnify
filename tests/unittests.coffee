@@ -9,7 +9,12 @@ runtests=()->
         
     module "unify"
     test "simple black box unify test", () ->
-        ok(unify([{a: [1,{},3]}, {a: [1,new Var("b"),3]}]))
+        ok(unify([{a: [1,2,3]}, {a: [1,new Var("b"),3]}]))
+
+    module "extract"
+    test "simple variable extraction test", () ->
+        tins = unify([{a: [1,2,3]}, {a: [1,new Var("b"),3]}])
+        ok(get_value(tins[1],"b"))
 
 
 # utils

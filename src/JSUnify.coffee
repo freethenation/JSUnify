@@ -184,7 +184,6 @@ unify = (expressions) ->
     #expr = if expr.length <= 1 then expr[0] else expr
     
     # Automagically parse the expressions into Tins
-    # Realize, if you do this - you will never be able to get the bindings back (since these tins are discarded)
     expr = ((if e instanceof Tin then e else parse([e])[0]) for e in expr)
 
     # Unify each expression with its neighbor
@@ -192,9 +191,8 @@ unify = (expressions) ->
     # TODO: Verify that there's no problem with this
     for i in [1...len(expr)]
         success = _unify(expr[i-1].node,expr[i-1].varlist,expr[i].node,expr[i].varlist)
-        if success == 0 then return false
-    return true
-    return
+        if success == 0 then return null
+    return expr
 
 # (a bit less) stupid slow implemention to get a variable's binding
 # would be more elegant to rewrite the Var case to use get_tin from the start
