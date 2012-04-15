@@ -1,5 +1,5 @@
 parsetest=(obj) -> deepEqual(parse([obj])[0].unparse(),obj, "parse")
-unifytest=(obj1, obj2) -> ok(unify(obj1,obj2), "unify")
+unifytest=(objs) -> ok(unify(objs), "unify")
 unifyfailtest=(obj1, obj2) -> ok(!unify(obj1,obj2), "unify fail")
 gettest=(tin, varValueDict) ->
     for v of varValueDict
@@ -44,12 +44,25 @@ runtests=()->
         tins = unify([[new Var("x"), 2, new Var("x")], [1,2,1]])
         ok(tins)
         deepEqual(tins[0].get_all(), {"x":1})
+    test "simple three part unify [X,2,3] -> [1,Y,3] -> [1,2,Z]", () ->
+        tins = unify([
+            [new Var("X"),2,3],
+            [1,new Var("Y"),3],
+            [1,2,new Var("Z")]
+        ])
+        gettest(tins[0], {X:1})
+        gettest(tins[1], {Y:2})
+        gettest(tins[2], {Z:3})
     test "three part unify [X,1,2] -> [Y,1,2] -> [1,1,X]", () ->
-        tins = unify([[new Var("x"),1,2],[new Var("y"),1,2],[1,1,new Var("x")]])
-        ok(tins,"unification succeeded?")
-        ok(tins[0].get("x") == 1, "t1.x == 1?")
-        ok(tins[1].get("y") == 1, "t2.y == 1?")
-        ok(tins[2].get("x") == 2, "t3.x == 2?")
+        tins = unify([
+            [new Var("x"),1,2],
+            [new Var("y"),1,2],
+            [1,1,new Var("x")]
+        ])
+        gettest(tins[0], {x:1})
+        gettest(tins[1], {y:1})
+        gettest(tins[2], {x:2})
+        
     module "extract"
     test "simple variable extraction test", () ->
         tins = unify([{a: [1,2,3]}, {a: [1,new Var("b"),3]}])
