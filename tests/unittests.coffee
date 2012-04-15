@@ -58,6 +58,13 @@ runtests=()->
         tins = unify([{a: [1,2,3]}, {a: [1,new Var("b"),3]}])
         deepEqual(tins[1].get_all(), {"b":2})
 
+    module "hidden variables"
+    test "create hidden variable", () ->
+        ok((new Var("_")).isHiddenVar())
+    test "simple hidden variable [_,X] -> [1,2]", () ->
+        fulltest([new Var("_"),new Var("x")],[1,2],{"x":2},{})
+    test "multiple hidden variables [_,_,X] -> [1,2,3]", () ->
+        fulltest([new Var("_"),new Var("_"),new Var("x")],[1,2,3],{"x":3},{})
 
 # utils
 log=(o)->console.log o

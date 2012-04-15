@@ -54,8 +54,17 @@ class Box
             throw "Can only box value types"
     toString: () -> "new Box(#{ toJson(@value) })"
 
+g_hidden_var_counter = 1
+HIDDEN_VAR_PREFIX = "__B3qgfO__"
+isHiddenVar = (name) -> name[0...HIDDEN_VAR_PREFIX.length] == HIDDEN_VAR_PREFIX
 class Var
-    constructor: (@name) ->
+    constructor: (name) ->
+        if name == "_"
+            @name = HIDDEN_VAR_PREFIX + g_hidden_var_counter
+            g_hidden_var_counter += 1
+        else
+            @name = name
+    isHiddenVar: () -> isHiddenVar @name
     toString: () -> "new Var(#{ @name })"
 
 class Tin
@@ -65,6 +74,7 @@ class Tin
         @chainlength = 1
         @name = name
     isfree:()->!@node?
+    isHiddenVar: () -> isHiddenVar @name
     toString:() -> "new Tin(#{ @name }, #{ toJson @node }, #{ tinVars2s @varlist})"
     get: (var_name) ->
         vartin = @varlist[var_name]
@@ -88,7 +98,7 @@ class Tin
     get_all: () ->
         j = {}
         for key of @varlist
-            j[key] = @get(key)
+            j[key] = @get(key) if !isHiddenVar key
         return j
     unparse: () ->
         unboxit @node
