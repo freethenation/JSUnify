@@ -90,6 +90,8 @@ class Tin
         for key of @varlist
             j[key] = @get(key)
         return j
+    unparse: () ->
+        unboxit @node
 
 boxit = (elem,tinlist) ->
     if elem instanceof Var

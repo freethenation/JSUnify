@@ -1,6 +1,27 @@
+parsetest=(obj) -> deepEqual(parse([obj])[0].unparse(),obj, "parse okay!")
+unifytest=(obj1, obj2) -> ok(unify(obj1,obj2), "unify okay!")
+gettest=(tin, varValueDict) ->
+    for v of varValueDict
+        equal(tin.get(v), varValueDict[v], "get okay!")
+fulltest=(obj1, obj2, varValueDict1, varValueDict2) ->
+    parsetest(obj1)
+    parsetest(obj2)
+    obj1 = parse([obj1])[0]
+    obj2 = parse([obj2])[0]
+    unifytest([obj1, obj2])
+    gettest(obj1, varValueDict1)
+    gettest(obj2, varValueDict2)
+
+
 runtests=()->
     for prop of JSUnify
         window[prop] = JSUnify[prop]
+        
+    module "full tests"
+    test "empty obj", ()->
+        fulltest({}, {}, {}, {})
+    test "simple var", ()->
+        fulltest({g:new Var("a")}, {g:1}, {a:1}, {})
         
     module "parse"
     test "simple parse Tin.node test", ()->
