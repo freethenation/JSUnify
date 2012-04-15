@@ -3,7 +3,11 @@ unifytest=(objs) -> ok(unify(objs), "unify")
 unifyfailtest=(obj1, obj2) -> ok(!unify(obj1,obj2), "unify fail")
 gettest=(tin, varValueDict) ->
     for v of varValueDict
-        deepEqual(tin.get(v), varValueDict[v], "get(#{ v }) == #{ toJson varValueDict[v] }")
+        value = tin.get(v)
+        if value instanceof Var
+            ok(varValueDict[v] instanceof Var, "get(#{ v }) = new Var(#{ varValueDict[v].name })")
+        else
+            deepEqual(value, varValueDict[v], "get(#{ v }) == #{ toJson varValueDict[v] }")
 fulltest=(obj1, obj2, varValueDict1, varValueDict2) ->
     parsetest(obj1)
     parsetest(obj2)
@@ -34,6 +38,9 @@ runtests=()->
             [[1,2,new Var("x")],new Var("x")], 
             [new Var("y"),3], 
             {x:3}, {y:[1,2,3]})
+    test "unbound variable [y]->[x]", ()->
+        fulltest([new Var("y")], [new Var("x")], {y:new Var("y")}, {x:new Var("x")})
+            
     module "unify fail tests"
     test "variable equal [X,X] -> [1,2]", ()->
         unifyfailtest([[new Var("a"), new Var("a")], [1,2]])
