@@ -40,7 +40,7 @@ runtests=()->
     test "unbound variable [y]->[x]", ()->
         fulltest([new Var("y")], [new Var("x")], {y:new Var("y")}, {x:new Var("x")})
     test "variable equal [1,X,X] -> [Z,Z,1]", () ->
-        fulltest([[1, new Var("X"), new Var("X")], [new Var("Z"), new Var("Z"), 1]], {X:1}, {Z:1})
+        fulltest([1, new Var("X"), new Var("X")], [new Var("Z"), new Var("Z"), 1], {X:1}, {Z:1})
             
     module "unify fail tests"
     test "variable equal [X,X] -> [1,2]", ()->
