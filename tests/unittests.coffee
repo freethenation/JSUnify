@@ -97,6 +97,8 @@ runtests=()->
         fulltest([new Var("_"),new Var("x")],[1,2],{"x":2},{})
     test "multiple hidden variables [_,_,X] -> [1,2,3]", () ->
         fulltest([new Var("_"),new Var("_"),new Var("x")],[1,2,3],{"x":3},{})
+    test "[[1,_,3],[1,2,3]] -> [X,X]", () ->
+        fulltest([[1,new Var("_"),3],[1,2,3]],[new Var("x"),new Var("x")],{},{"x":[1,2,3]})
 
 # utils
 log=(o)->console.log o

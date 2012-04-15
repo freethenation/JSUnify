@@ -146,9 +146,6 @@ unboxit = (tree, varlist) ->
 
 # create the relevant tins
 parse = (elems) ->
-    # Allow either multiple entries or lists (without splat notation)
-    #    elems = if elems.length <= 1 then elems[0] else elems
-
     out = []
     for elem in elems
         tinlist = {}
@@ -214,10 +211,6 @@ _unify = (n1,v1,n2,v2) ->
                 return 0 if _unify(n1[idx],v1,n2[idx],v2) == 0
     return 1
 
-# publicly visible unify function 
-# perhaps we should return a list of bindings instead of true?
-# RPK: I think we should return a list of headtins. This allows unify to be called multible times without reparseing
-#           Also this resolves the "you will never be able to get the bindings back" issue
 unify = (expressions) ->
     success = 1
     expr = expressions
@@ -232,11 +225,6 @@ unify = (expressions) ->
         success = _unify(expr[i-1].node,expr[i-1].varlist,expr[i].node,expr[i].varlist)
         if success == 0 then return null
     return expr
-
-# (a bit less) stupid slow implemention to get a variable's binding
-# would be more elegant to rewrite the Var case to use get_tin from the start
-# RPK: Variable names are scoped by tins. Variable "A" in tin1 is a different variable then variable "A" in tin2. 
-#       This should allow us to make this function alot more efficient. I can explain why vars are scoped as they are in person.
 
  # export functions so they are visible outside of this file
  extern "parse", parse
