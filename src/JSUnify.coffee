@@ -32,6 +32,8 @@ isvaluetype=(o) -> isbool(o) or isstr(o) or isnum(o)
 toJson=(elem) ->
     if isarray elem
         return "[#{ (toJson e for e in elem).join(',') }]"
+    if isobj elem
+        return "{#{ (( e + ':' + toJson(elem[e])) for e of elem).join(',') }}"
     else if isstr elem
         return "\"#{ elem }\""
     else
