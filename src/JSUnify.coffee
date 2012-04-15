@@ -30,11 +30,11 @@ isvaluetype=(o) -> isbool(o) or isstr(o) or isnum(o)
 
 # util functions to convert various data types to strings
 toJson=(elem) ->
-    if isarray elem 
-        return "[#{ (toJson e for e in elem).join(',') }]" 
+    if isarray elem
+        return "[#{ (toJson e for e in elem).join(',') }]"
     else if isstr elem
         return "\"#{ elem }\""
-    else 
+    else
         return str(elem)
 tinVars2s=(vars) ->
     return null # RPK: not implmented yet
@@ -64,6 +64,30 @@ class Tin
         @name = name
     isfree:()->!@node?
     toString:() -> "new Tin(#{ @name }, #{ toJson @node }, #{ tinVars2s @varlist})"
+    get: (var_name) ->
+        vartin = @varlist[var_name]
+        if not vartin?
+            throw "Variable #{var_name} not in this tin"
+        else if not vartin.node? or vartin.node == null
+            return new Var(var_name)
+        else if vartin.node instanceof Box
+            return unboxit(vartin.node)
+        else if vartin.node instanceof Var
+            node = vartin.node
+            vlist = vartin.varlist
+            while node instanceof Var
+                t = get_tin(vlist,node)
+                node = t.node
+                vlist = t.varlist
+        else if isarray(vartin.node) or isobj(vartin.node)
+            return unboxit(vartin.node)
+        else
+            throw "Unknown type in get"
+    get_all: () ->
+        j = {}
+        for key of @varlist
+            j[key] = @get(key)
+        return j
 
 boxit = (elem,tinlist) ->
     if elem instanceof Var
@@ -198,30 +222,10 @@ unify = (expressions) ->
 # would be more elegant to rewrite the Var case to use get_tin from the start
 # RPK: Variable names are scoped by tins. Variable "A" in tin1 is a different variable then variable "A" in tin2. 
 #       This should allow us to make this function alot more efficient. I can explain why vars are scoped as they are in person.
-get_value = (headtin, var_name) ->
-    vartin = headtin.varlist[var_name]
-    if not vartin?
-        throw "Variable #{var_name} not in this tin"
-    else if not vartin.node? or vartin.node == null
-        return new Var(var_name)
-    else if vartin.node instanceof Box
-        return unboxit(vartin.node)
-    else if vartin.node instanceof Var
-        node = vartin.node
-        vlist = vartin.varlist
-        while node instanceof Var
-            t = get_tin(vlist,node)
-            node = t.node
-            vlist = t.varlist
-    else if isarray(vartin.node) or isobj(vartin.node)
-        return unboxit(vartin.node)
-    else
-        throw "Unknown type in get_value"
 
  # export functions so they are visible outside of this file
  extern "parse", parse
  extern "unify", unify
- extern "get_value", get_value
  extern "Var", Var
  extern "Tin", Tin
  extern "Box", Box

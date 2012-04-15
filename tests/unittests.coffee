@@ -14,7 +14,10 @@ runtests=()->
     module "extract"
     test "simple variable extraction test", () ->
         tins = unify([{a: [1,2,3]}, {a: [1,new Var("b"),3]}])
-        ok(get_value(tins[1],"b"))
+        ok(tins[1].get("b") == 2)
+    test "extract all variables test", () ->
+        tins = unify([{a: [1,2,3]}, {a: [1,new Var("b"),3]}])
+        deepEqual(tins[1].get_all(), {"b":2})
 
 
 # utils
