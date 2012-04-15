@@ -1,8 +1,9 @@
-parsetest=(obj) -> deepEqual(parse([obj])[0].unparse(),obj, "parse okay!")
-unifytest=(obj1, obj2) -> ok(unify(obj1,obj2), "unify okay!")
+parsetest=(obj) -> deepEqual(parse([obj])[0].unparse(),obj, "parse")
+unifytest=(obj1, obj2) -> ok(unify(obj1,obj2), "unify")
+unifyfailtest=(obj1, obj2) -> ok(!unify(obj1,obj2), "unify fail")
 gettest=(tin, varValueDict) ->
     for v of varValueDict
-        equal(tin.get(v), varValueDict[v], "get okay!")
+        equal(tin.get(v), varValueDict[v], "get")
 fulltest=(obj1, obj2, varValueDict1, varValueDict2) ->
     parsetest(obj1)
     parsetest(obj2)
@@ -18,10 +19,18 @@ runtests=()->
         window[prop] = JSUnify[prop]
         
     module "full tests"
-    test "empty obj", ()->
+    test "empty obj {} -> {}", ()->
         fulltest({}, {}, {}, {})
-    test "simple var", ()->
-        fulltest({g:new Var("a")}, {g:1}, {a:1}, {})
+    test "variable equal [X] -> [1]", ()->
+        fulltest([new Var("a")], [1], {a:1}, {})
+    test "variable equal [X,X] -> [1,1]", ()->
+        fulltest([new Var("a"), new Var("a")], [1,1], {a:1}, {})
+    
+    module "unify fail tests"
+    test "variable equal [X,X] -> [1,2]", ()->
+        unifyfailtest([[new Var("a"), new Var("a")], [1,2]])
+    test "variable unequal [1,3,2] -> [Y,Y,2]", () ->
+        unifyfailtest([ [1, 3, 2], [new Var("y"), new Var("y"), 2] ])
         
     module "parse"
     test "simple parse Tin.node test", ()->
@@ -35,10 +44,6 @@ runtests=()->
         tins = unify([[new Var("x"), 2, new Var("x")], [1,2,1]])
         ok(tins)
         deepEqual(tins[0].get_all(), {"x":1})
-    test "variable unequal [1,3,2] -> [Y,Y,2]", () ->
-        tins = unify([ [1, 3, 2], [new Var("y"), new Var("y"), 2] ])
-        ok(tins == null) # Unification should fail
-        log tins[1].get_all()
     test "three part unify [X,1,2] -> [Y,1,2] -> [1,1,X]", () ->
         tins = unify([[new Var("x"),1,2],[new Var("y"),1,2],[1,1,new Var("x")]])
         ok(tins,"unification succeeded?")

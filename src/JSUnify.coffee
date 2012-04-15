@@ -150,12 +150,12 @@ get_tin = (varlist,node) ->
 
 bind = (t1,t2) ->
     # log "Binding #{t1} and #{t2}"
-    if not t1.isfree and not t2.isfree
+    if not t1.isfree() and not t2.isfree()
         return false
-    else if t1.isfree and not t2.isfree
+    else if t1.isfree() and not t2.isfree()
         t1.node = t2.node
         t1.varlist = t2.varlist
-    else if not t1.isfree and t2.isfree
+    else if not t1.isfree() and t2.isfree()
         t2.node = t1.node
         t2.varlist = t1.varlist
     else if t1.chainlength > t2.chainlength
@@ -179,18 +179,18 @@ _unify = (n1,v1,n2,v2) ->
             return 0 if _unify(t1.node, t1.varlist, t2.node, t2.varlist) == 0
     else if n1 instanceof Var
         t1 = get_tin(v1,n1)
-        if t1.isfree
+        if t1.isfree()
             t1.node = n2
             t1.varlist = v2
         else
-            return 0 if _unify(t1.node,t1.varlist,n2,v2)
+            return 0 if _unify(t1.node,t1.varlist,n2,v2) == 0
     else if n2 instanceof Var
         t2 = get_tin(v2,n2)
-        if t2.isfree
+        if t2.isfree()
             t2.node = n1
             t2.varlist = v1
         else
-            return 0 if _unify(t2.node,t2.varlist,n1,v1)
+            return 0 if _unify(t2.node,t2.varlist,n1,v1) == 0
     else
         if n1 instanceof Box and n2 instanceof Box and isvaluetype(n1.value) and isvaluetype(n2.value) 
             return if n1.value != n2.value then 0 else 1
@@ -207,9 +207,6 @@ _unify = (n1,v1,n2,v2) ->
 unify = (expressions) ->
     success = 1
     expr = expressions
-    
-    # Lets you pass in an array without the splat notation
-    #expr = if expr.length <= 1 then expr[0] else expr
     
     # Automagically parse the expressions into Tins
     expr = ((if e instanceof Tin then e else parse([e])[0]) for e in expr)
