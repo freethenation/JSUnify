@@ -83,16 +83,11 @@ class Tin
         else if not vartin.node? or vartin.node == null
             return new Var(var_name)
         else if vartin.node instanceof Box
-            return unboxit(vartin.node)
+            return unboxit(vartin.node,vartin.varlist)
         else if vartin.node instanceof Var
-            node = vartin.node
-            vlist = vartin.varlist
-            while node instanceof Var
-                t = get_tin(vlist,node)
-                node = t.node
-                vlist = t.varlist
-        else if isarray(vartin.node) or isobj(vartin.node)
-            return unboxit(vartin.node)
+            return unboxit(vartin.node,vartin.varlist)
+        else if isarray(vartin.node)
+            return ( unboxit(n,vartin.varlist) for n in vartin.node )
         else
             throw "Unknown type in get"
     get_all: () ->
@@ -123,7 +118,7 @@ boxit = (elem,tinlist) ->
         throw "Don't understand the type of elem"
 
 # Unbox the result and get back plain JS
-unboxit = (tree) ->
+unboxit = (tree, varlist) ->
     # log "Unboxing tree #{tree}"
     if isarray tree
         if tree[tree.length-1] == DICT_FLAG # TODO: Check bounds
@@ -136,7 +131,16 @@ unboxit = (tree) ->
     else if tree instanceof Box
         return tree.value
     else if tree instanceof Var
-        return tree
+        if varlist != undefined
+            log varlist
+            log tree
+            try
+                tin = get_tin(varlist,tree)
+            catch error # Is unbound
+                return tree
+            return unboxit(tin.node,tin.varlist)
+        else
+            return tree
     else
         throw "Unrecognized type '#{typeof(tree)}' in unboxit"
 
