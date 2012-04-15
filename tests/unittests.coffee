@@ -3,7 +3,7 @@ unifytest=(obj1, obj2) -> ok(unify(obj1,obj2), "unify")
 unifyfailtest=(obj1, obj2) -> ok(!unify(obj1,obj2), "unify fail")
 gettest=(tin, varValueDict) ->
     for v of varValueDict
-        equal(tin.get(v), varValueDict[v], "get")
+        equal(tin.get(v), varValueDict[v], "get(#{ v }) == #{ varValueDict[v] }")
 fulltest=(obj1, obj2, varValueDict1, varValueDict2) ->
     parsetest(obj1)
     parsetest(obj2)
@@ -32,14 +32,14 @@ runtests=()->
     test "variable unequal [1,3,2] -> [Y,Y,2]", () ->
         unifyfailtest([ [1, 3, 2], [new Var("y"), new Var("y"), 2] ])
         
-    module "parse"
+    module "misc"
     test "simple parse Tin.node test", ()->
         res = parse([{a: [1,{},"r"]}])[0].node
         deepEqual(res, [[new Box("a"),[new Box(1),[new DictFlag()],new Box("r")]],new DictFlag()])
-        
-    module "unify"
     test "simple black box unify test", () ->
         ok(unify([{a: [1,2,3]}, {a: [1,new Var("b"),3]}]))
+    
+    module "unify"
     test "variable equal [X,2,X] -> [1,2,1]", () ->
         tins = unify([[new Var("x"), 2, new Var("x")], [1,2,1]])
         ok(tins)
