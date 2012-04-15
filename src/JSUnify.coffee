@@ -25,7 +25,7 @@ isbool=(o) -> typeof o == "boolean"
 isarray=(o) -> o? && Array.isArray o
 isstr=(o) -> typeof o == "string"
 isnum=(o) -> typeof o == "number"
-isobj=(o) -> not isarray(o) and typeof o == "object"
+isobj=(o) -> o!=null and not isarray(o) and typeof o == "object"
 isvaluetype=(o) -> isbool(o) or isstr(o) or isnum(o)
 
 # util functions to convert various data types to strings
@@ -48,7 +48,7 @@ DICT_FLAG = new DictFlag()
 
 class Box
     constructor: (v) ->
-        if isvaluetype(v)
+        if isvaluetype(v) || v == null
             @value = v
         else
             throw "Can only box value types"
@@ -112,7 +112,7 @@ boxit = (elem,tinlist) ->
             a.push( [boxit(key,tinlist), boxit(elem[key],tinlist)] )
         a.push(DICT_FLAG)
         return a.sort()
-    else if isvaluetype elem
+    else if isvaluetype elem or elem == null
         return new Box elem
     else
         throw "Don't understand the type of elem"

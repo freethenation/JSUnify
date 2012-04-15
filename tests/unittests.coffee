@@ -21,6 +21,8 @@ runtests=()->
     module "full tests"
     test "empty obj {} -> {}", ()->
         fulltest({}, {}, {}, {})
+    test "null test [null] -> [null]", ()->
+        fulltest([null], [null], {}, {})
     test "variable equal [X] -> [1]", ()->
         fulltest([new Var("a")], [1], {a:1}, {})
     test "variable equal [X,X] -> [1,1]", ()->
