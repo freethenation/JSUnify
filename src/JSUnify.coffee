@@ -246,9 +246,3 @@ unify = (expressions) ->
  extern "Box", Box
  extern "DictFlag", DictFlag
  extern "toJson", toJson
-
-# ht = parse( {a: [1,{},3]}, {a: [1,new Var("b"),3]} ) 
-# log unify(ht) and "unification succeeded!" or "unification failed"
-# log unboxit( get_value(ht, "b") )
-
-# log unify([{a: [1,{},3]}, {a: [1,new Var("b"),3]}]) and "unification succeeded!" or "unification failed"
