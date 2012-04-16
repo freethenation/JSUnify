@@ -11,6 +11,8 @@ dir=(o)->console.dir o
 len=(o)-> o.length
 window.JSUnify={}
 extern=(name, o)->window.JSUnify[name] = o
+window.JSUnify.internal={}
+internal=(name, o)->window.JSUnify.internal[name] = o
 str=(o)->
     if typeof o == "undefined"
         "undefined"
@@ -57,7 +59,7 @@ class Box
 g_hidden_var_counter = 1
 HIDDEN_VAR_PREFIX = "__B3qgfO__"
 isHiddenVar = (name) -> name[0...HIDDEN_VAR_PREFIX.length] == HIDDEN_VAR_PREFIX
-class Var
+class Variable
     constructor: (name) ->
         if name == "_"
             @name = HIDDEN_VAR_PREFIX + g_hidden_var_counter
@@ -65,7 +67,8 @@ class Var
         else
             @name = name
     isHiddenVar: () -> isHiddenVar @name
-    toString: () -> "new Var(#{ @name })"
+    toString: () -> "new Variable(#{ @name })"
+Var=(name)->new Variable(name)
 
 class Tin
     constructor: (name, node, varlist) ->
@@ -99,7 +102,7 @@ class Tin
         unboxit @node
 
 boxit = (elem,tinlist) ->
-    if elem instanceof Var
+    if elem instanceof Variable
         tinlist?[elem.name] =  new Tin( elem.name, null, null )
         return elem
     else if elem instanceof Box
@@ -130,7 +133,7 @@ unboxit = (tree, varlist) ->
             return (unboxit(item) for item in tree)
     else if tree instanceof Box
         return tree.value
-    else if tree instanceof Var
+    else if tree instanceof Variable
         if varlist != undefined
             log varlist
             log tree
@@ -155,7 +158,7 @@ parse = (elems) ->
     return out
 
 get_tin = (varlist,node) ->
-    throw "Node must be a Var to get_tin" if not node instanceof Var
+    throw "Node must be a Var to get_tin" if not node instanceof Variable
     return varlist[node.name] if varlist?[node.name]?
     throw "Couldn't find node #{node.name} in varlist #{varlist}"
 
@@ -183,19 +186,19 @@ _unify = (n1,v1,n2,v2) ->
     return 1 if n1 == undefined and n2 == undefined
     return 1 if n1 == null and n2 == null
     return 0 if n1 == null or n2 == null
-    if n1 instanceof Var and n2 instanceof Var
+    if n1 instanceof Variable and n2 instanceof Variable
         t1 = get_tin(v1, n1)
         t2 = get_tin(v2, n2)
         if not bind(t1,t2)
             return 0 if _unify(t1.node, t1.varlist, t2.node, t2.varlist) == 0
-    else if n1 instanceof Var
+    else if n1 instanceof Variable
         t1 = get_tin(v1,n1)
         if t1.isfree()
             t1.node = n2
             t1.varlist = v2
         else
             return 0 if _unify(t1.node,t1.varlist,n2,v2) == 0
-    else if n2 instanceof Var
+    else if n2 instanceof Variable
         t2 = get_tin(v2,n2)
         if t2.isfree()
             t2.node = n1
@@ -230,7 +233,8 @@ unify = (expressions) ->
  extern "parse", parse
  extern "unify", unify
  extern "Var", Var
- extern "Tin", Tin
- extern "Box", Box
- extern "DictFlag", DictFlag
- extern "toJson", toJson
+ internal "Tin", Tin
+ internal "Box", Box
+ internal "DictFlag", DictFlag
+ internal "toJson", toJson
+ internal "Variable", Variable
