@@ -67,7 +67,7 @@ class Variable
         else
             @name = name
     isHiddenVar: () -> isHiddenVar @name
-    toString: () -> "new Variable(#{ @name })"
+    toString: () -> "Var(#{ @name })"
 Var=(name)->new Variable(name)
 
 class Tin
