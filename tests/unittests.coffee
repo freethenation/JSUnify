@@ -1,4 +1,4 @@
-parsetest=(obj) -> deepEqual(parse([obj])[0].unparse(),obj, "parse")
+parsetest=(obj) -> deepEqual(parse(obj).unparse(),obj, "parse")
 unifytest=(obj1, obj2) -> ok(unify(obj1, obj2), "unify")
 unifyfailtest=(obj1, obj2) -> ok(!unify(obj1,obj2), "unify fail")
 gettest=(tin, varValueDict) ->
@@ -10,8 +10,8 @@ gettest=(tin, varValueDict) ->
 fulltest=(obj1, obj2, varValueDict1, varValueDict2) ->
     parsetest(obj1)
     parsetest(obj2)
-    obj1 = parse([obj1])[0]
-    obj2 = parse([obj2])[0]
+    obj1 = parse(obj1)
+    obj2 = parse(obj2)
     unifytest(obj1, obj2)
     gettest(obj1, varValueDict1)
     gettest(obj2, varValueDict2)

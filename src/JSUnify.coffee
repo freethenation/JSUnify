@@ -148,14 +148,10 @@ unboxit = (tree, varlist) ->
         throw "Unrecognized type '#{typeof(tree)}' in unboxit"
 
 # create the relevant tins
-parse = (elems) ->
-    out = []
-    for elem in elems
-        tinlist = {}
-        tree = boxit(elem,tinlist)
-        headtin = new Tin( null, tree, tinlist )
-        out.push(headtin)
-    return out
+parse = (elem) ->
+    tinlist = {}
+    tree = boxit(elem,tinlist)
+    return new Tin( null, tree, tinlist )
 
 get_tin = (varlist,node) ->
     throw "Node must be a Var to get_tin" if not node instanceof Variable
@@ -216,8 +212,8 @@ _unify = (n1,v1,n2,v2) ->
 
 unify = (expr1,expr2) ->
     success = 1
-    expr1 = if expr1 instanceof Tin then expr1 else parse([expr1])[0]
-    expr2 = if expr2 instanceof Tin then expr2 else parse([expr2])[0]
+    expr1 = if expr1 instanceof Tin then expr1 else parse(expr1)
+    expr2 = if expr2 instanceof Tin then expr2 else parse(expr2)
     success = _unify(expr1.node,expr1.varlist,expr2.node,expr2.varlist)
     if success == 0
         return null
