@@ -1,9 +1,6 @@
 # TODO:
-#   1) Make a version of Unify that returns (unboxed) bindings
-#   2) Support for _ and _:_
-#   4) Verify that u(a,b) && u(b,c) && u(c,d) === u(a,b,c,d)
+#   2) Support for _:_
 #   5) Clean up functions?
-#   7) Write unit tests
 
 # utils
 log=(o)->console.log o
@@ -122,7 +119,6 @@ boxit = (elem,tinlist) ->
 
 # Unbox the result and get back plain JS
 unboxit = (tree, varlist) ->
-    # log "Unboxing tree #{tree}"
     if isarray tree
         if tree[tree.length-1] == DICT_FLAG # TODO: Check bounds
             hash = new Object()
@@ -159,7 +155,6 @@ get_tin = (varlist,node) ->
     throw "Couldn't find node #{node.name} in varlist #{varlist}"
 
 bind = (t1,t2) ->
-    # log "Binding #{t1} and #{t2}"
     if not t1.isfree() and not t2.isfree()
         return false
     else if t1.isfree() and not t2.isfree()
@@ -178,7 +173,6 @@ bind = (t1,t2) ->
 
 # unification!
 _unify = (n1,v1,n2,v2) ->
-    # log "#{b2s n1} -> #{b2s n2}"
     return 1 if n1 == undefined and n2 == undefined
     return 1 if n1 == null and n2 == null
     return 0 if n1 == null or n2 == null
