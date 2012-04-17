@@ -12,11 +12,11 @@ window.JSUnify.internal={}
 internal=(name, o)->window.JSUnify.internal[name] = o
 str=(o)->
     if typeof o == "undefined"
-        "undefined"
+        return "undefined"
     else if o==null
-        "null"
+        return "null"
     else
-        o.toString()
+       return o.toString()
 
 # type testing functions
 isundef=(o) -> typeof o == "undefined"
@@ -31,14 +31,14 @@ isvaluetype=(o) -> isbool(o) or isstr(o) or isnum(o)
 toJson=(elem) ->
     if isarray elem
         return "[#{ (toJson e for e in elem).join(',') }]"
-    if isobj elem
+    else if elem instanceof Box or elem instanceof Tin or elem instanceof Variable or elem instanceof DictFlag
+        return str(elem)
+    else if isobj elem
         return "{#{ (( e + ':' + toJson(elem[e])) for e of elem).join(',') }}"
     else if isstr elem
         return "\"#{ elem }\""
     else
         return str(elem)
-tinVars2s=(vars) ->
-    return null # RPK: not implmented yet
 
 # metadata to indicate this was a dictionary
 class DictFlag
@@ -51,7 +51,7 @@ class Box
             @value = v
         else
             throw "Can only box value types"
-    toString: () -> "new Box(#{ toJson(@value) })"
+    toString: () -> ("new Box(#{ toJson(@value) })")
 
 g_hidden_var_counter = 1
 HIDDEN_VAR_PREFIX = "__B3qgfO__"
@@ -75,7 +75,7 @@ class Tin
         @name = name
     isfree:()->!@node?
     isHiddenVar: () -> isHiddenVar @name
-    toString:() -> "new Tin(#{ @name }, #{ toJson @node }, #{ tinVars2s @varlist})"
+    toString:() -> "new Tin(#{ toJson @name }, #{ toJson @node }, #{ toJson @varlist})"
     get: (var_name) ->
         vartin = @varlist[var_name]
         if not vartin?
