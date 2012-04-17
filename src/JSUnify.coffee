@@ -214,20 +214,15 @@ _unify = (n1,v1,n2,v2) ->
                 return 0 if _unify(n1[idx],v1,n2[idx],v2) == 0
     return 1
 
-unify = (expressions) ->
+unify = (expr1,expr2) ->
     success = 1
-    expr = expressions
-    
-    # Automagically parse the expressions into Tins
-    expr = ((if e instanceof Tin then e else parse([e])[0]) for e in expr)
-
-    # Unify each expression with its neighbor
-    # u(a,b) && u(b,c) && u(c,d) ...
-    # TODO: Verify that there's no problem with this
-    for i in [1...len(expr)]
-        success = _unify(expr[i-1].node,expr[i-1].varlist,expr[i].node,expr[i].varlist)
-        if success == 0 then return null
-    return expr
+    expr1 = if expr1 instanceof Tin then expr1 else parse([expr1])[0]
+    expr2 = if expr2 instanceof Tin then expr2 else parse([expr2])[0]
+    success = _unify(expr1.node,expr1.varlist,expr2.node,expr2.varlist)
+    if success == 0
+        return null
+    else
+        return [expr1,expr2]
 
  # export functions so they are visible outside of this file
  extern "parse", parse
