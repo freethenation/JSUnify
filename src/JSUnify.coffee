@@ -6,10 +6,10 @@
 log=(o)->console.log o
 dir=(o)->console.dir o
 len=(o)-> o.length
-window.JSUnify={}
-extern=(name, o)->window.JSUnify[name] = o
-window.JSUnify.internal={}
-internal=(name, o)->window.JSUnify.internal[name] = o
+if typeof exports == 'undefined' then window.JSUnify={}
+extern=(name, o)->if typeof exports == 'undefined' then window.JSUnify[name] = o else exports[name] = o
+if typeof exports == 'undefined' then window.JSUnify.internal={} else exports.internal = {}
+internal=(name, o)->if typeof exports == 'undefined' then window.JSUnify.internal[name] = o else exports.internal[name] = o
 str=(o)->
     if typeof o == "undefined"
         return "undefined"
