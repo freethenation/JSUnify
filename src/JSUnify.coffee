@@ -131,8 +131,8 @@ unboxit = (tree, varlist) ->
         return tree.value
     else if tree instanceof Variable
         if varlist != undefined
-            log varlist
-            log tree
+            # log varlist
+            # log tree
             try
                 tin = get_tin(varlist,tree)
             catch error # Is unbound
