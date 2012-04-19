@@ -93,7 +93,7 @@ str=(o)->
     else
         o.toString()
 extern=(name, o)->window[name] = o
-extern "runtests", runtests
+extern "RunJSUnifyUnitTests", runtests
 extern "str", str
 extern "len", len
 extern "log", log
