@@ -64,7 +64,7 @@ class Variable
         else
             @name = name
     isHiddenVar: () -> isHiddenVar @name
-    toString: () -> "Var(#{ @name })"
+    toString: () -> "Var(#{ toJson @name })"
 Var=(name)->new Variable(name)
 
 class Tin
@@ -154,65 +154,75 @@ get_tin = (varlist,node) ->
     return varlist[node.name] if varlist?[node.name]?
     throw "Couldn't find node #{node.name} in varlist #{varlist}"
 
-bind = (t1,t2) ->
+bind = (t1,t2, changes) ->
     if not t1.isfree() and not t2.isfree()
         return false
     else if t1.isfree() and not t2.isfree()
         t1.node = t2.node
         t1.varlist = t2.varlist
+        changes.push( () -> t1.node = null; t1.varlist = null )
     else if not t1.isfree() and t2.isfree()
         t2.node = t1.node
         t2.varlist = t1.varlist
+        changes.push( () -> t2.node = null; t2.varlist = null )
     else if t1.chainlength > t2.chainlength
         t1.node = t2.node
         t1.varlist = t2.varlist
+        changes.push( () -> t1.node = null; t1.varlist = null )
     else
         t2.node = t1.node
         t2.varlist = t1.varlist
+        changes.push( () -> t2.node = null; t2.varlist = null )
     return true
 
 # unification!
-_unify = (n1,v1,n2,v2) ->
-    return 1 if n1 == undefined and n2 == undefined
-    return 1 if n1 == null and n2 == null
-    return 0 if n1 == null or n2 == null
+_unify = (n1,v1,n2,v2,changes=[]) ->
+    return true if n1 == undefined and n2 == undefined
+    return true if n1 == null and n2 == null
+    return false if n1 == null or n2 == null
     if n1 instanceof Variable and n2 instanceof Variable
         t1 = get_tin(v1, n1)
         t2 = get_tin(v2, n2)
-        if not bind(t1,t2)
-            return 0 if _unify(t1.node, t1.varlist, t2.node, t2.varlist) == 0
+        if not bind(t1,t2,changes)
+            return false if _unify(t1.node, t1.varlist, t2.node, t2.varlist, changes) == false
     else if n1 instanceof Variable
         t1 = get_tin(v1,n1)
         if t1.isfree()
             t1.node = n2
             t1.varlist = v2
+            changes.push( () -> t1.node = null; t1.varlist = null )
         else
-            return 0 if _unify(t1.node,t1.varlist,n2,v2) == 0
+            return false if _unify(t1.node,t1.varlist,n2,v2, changes) == false
     else if n2 instanceof Variable
         t2 = get_tin(v2,n2)
         if t2.isfree()
             t2.node = n1
             t2.varlist = v1
+            changes.push( () -> t2.node = null; t2.varlist = null )
         else
-            return 0 if _unify(t2.node,t2.varlist,n1,v1) == 0
+            return false if _unify(t2.node,t2.varlist,n1,v1, changes) == false
     else
         if n1 instanceof Box and n2 instanceof Box and isvaluetype(n1.value) and isvaluetype(n2.value) 
-            return if n1.value != n2.value then 0 else 1
+            return if n1.value != n2.value then false else true
         else if isarray(n1) and isarray(n2)
-            return 0 if n1.length != n2.length
+            return false if n1.length != n2.length
             for idx in (num for num in [0..n1.length])
-                return 0 if _unify(n1[idx],v1,n2[idx],v2) == 0
-    return 1
+                return false if _unify(n1[idx],v1,n2[idx],v2, changes) == false
+    return true
 
-unify = (expr1,expr2) ->
-    success = 1
+unify = (expr1,expr2,changes=[]) ->
+    success = true
     expr1 = if expr1 instanceof Tin then expr1 else parse(expr1)
     expr2 = if expr2 instanceof Tin then expr2 else parse(expr2)
-    success = _unify(expr1.node,expr1.varlist,expr2.node,expr2.varlist)
-    if success == 0
+    success = _unify(expr1.node,expr1.varlist,expr2.node,expr2.varlist,changes)
+    if success == false
         return null
     else
         return [expr1,expr2]
+
+rollback = (changes) ->
+    for change in changes
+        change()
 
  # export functions so they are visible outside of this file
  extern "parse", parse
@@ -223,3 +233,4 @@ unify = (expr1,expr2) ->
  internal "DictFlag", DictFlag
  internal "toJson", toJson
  internal "Variable", Variable
+ extern "rollback", rollback

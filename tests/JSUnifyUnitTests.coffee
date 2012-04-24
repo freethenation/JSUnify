@@ -81,8 +81,26 @@ runtests=()->
     test "[[1,_,3],[1,2,3]] -> [X,X]", () ->
         fulltest([[1,Var("_"),3],[1,2,3]],[Var("x"),Var("x")],{},{"x":[1,2,3]})
 
-# utils
-log=(o)->console.log o
+    module "rollback"
+    test "rollback successful unification", () ->
+        obj1 = [1,2,3]
+        obj2 = [Var("A"), Var("B"), 3]
+        parsetest(obj1)
+        parsetest(obj2)
+        obj1 = parse(obj1)
+        obj2 = parse(obj2)
+
+        cobj1 = eval(obj1.toString())
+        cobj2 = eval(obj2.toString())
+
+        changes = []
+        ok(unify(obj1, obj2, changes), "unify")
+        
+        rollback(changes)
+
+        ok( obj1.toString() == cobj1.toString() )
+        ok( obj2.toString() == cobj2.toString() )
+                   
 dir=(o)->console.dir o
 len=(o)-> o.length
 str=(o)->
@@ -96,5 +114,5 @@ extern=(name, o)->window[name] = o
 extern "RunJSUnifyUnitTests", runtests
 extern "str", str
 extern "len", len
-extern "log", log
+#extern "log", log
 extern "dir", dir
