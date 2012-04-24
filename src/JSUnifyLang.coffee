@@ -29,6 +29,20 @@ iff=(conditional)->
     rule = @rules[@rules.length - 1]
     rule.iff(conditional)
     
+
+backtrack = (goal, rules) ->
+    for rule in rules
+        changes = []
+        if unify(goal, rule.node, changes)
+            for cond in rule.conditions
+                changes = []
+                if unify(rule.node, cond)
+                    backtrack(cond, rules, changes)
+                else
+                    rollback(changes)
+        else
+            rollback(changes)
+
     
 # rule {d:[C,X,0]}
 # iff (vars)->typeof vars.C == "number"
