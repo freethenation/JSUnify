@@ -76,6 +76,14 @@ class Tin
     isfree:()->!@node?
     isHiddenVar: () -> isHiddenVar @name
     toString:() -> "new Tin(#{ toJson @name }, #{ toJson @node }, #{ toJson @varlist})"
+    
+    # EMS Replace the variable-tins in this head-tin with those of the same name
+    # ENS from the `from` head-tin. Used internally in backtracking.
+    _refbind: (from) ->
+        for key of @varlist
+            if key of from.varlist
+                @varlist[key] = from.varlist[key]
+
     get: (var_name) ->
         vartin = @varlist[var_name]
         if not vartin?

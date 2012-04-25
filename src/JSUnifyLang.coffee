@@ -55,21 +55,28 @@ iff=(conditional)->
 # EMS 
 # EMS We cannot just share the tins - ex. Snowy(A,B) -> Rainy(A) && Cold(B)
 backtrack = (goal, rules) ->
+    if goal instanceof Rule
+        goal = goal.tin
+    else if not goal instanceof Tin
+        goal = parse(goal)
     for rule in rules
         changes1 = []
-        console.log "Head unify: #{ toJson goal.tin } -> #{ toJson rule.tin }"
-        if unify(goal.tin, rule.tin, changes1)
+        console.log "Head unify: #{ toJson goal } -> #{ toJson rule.tin }"
+        if unify(goal, rule.tin, changes1)
             for cond in rule.conditions
                 changes2 = []
-                console.log "Internal unify: #{ toJson rule.tin } -> #{ toJson cond }"
-                if unify(rule.tin, cond, changes2)
-                    backtrack(cond, rules)
-                else
-                    console.log "Rolling back last internal unify"
-                    rollback(changes2)
+                console.log "Refbind: #{ toJson rule.tin } -> #{ toJson cond }"
+                cond._refbind(rule.tin)
+
+                #if unify(rule.tin, cond, changes2)
+                return backtrack(cond, rules)
+                #else
+                    #console.log "Rolling back last internal unify"
+                    #rollback(changes2)
         else
             console.log "Rolling back last head unify"
             rollback(changes1)
+            console.log "Tins after rollback: #{ toJson goal } -> #{ toJson rule.tin }"
 
 
 extern "backtrack", backtrack
