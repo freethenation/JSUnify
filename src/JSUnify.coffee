@@ -50,7 +50,7 @@ class Box
         if isvaluetype(v) || v == null
             @value = v
         else
-            throw "Can only box value types"
+            throw "Can only box value types, not #{ toJson v }"
     toString: () -> ("new Box(#{ toJson(@value) })")
 
 g_hidden_var_counter = 1
