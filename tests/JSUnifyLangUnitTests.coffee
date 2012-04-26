@@ -18,7 +18,7 @@ runtests=()->
         rules.push(new Rule({"rainy":"Cincinnati"}))
         rules.push(new Rule({"rainy":"Chicago"}))
         rules.push(new Rule({"cold":"Chicago"}))
-        rules.push(new Rule({"snowy":Var("X")},{"rainy":Var("X")},{"snowy":Var("X")}))
+        rules.push(new Rule({"snowy":Var("X")},{"rainy":Var("X")},{"cold":Var("X")}))
         ok(backtrack( goal, rules ))
         console.log goal.tin
         ok(goal.tin.get("P") == "Chicago")

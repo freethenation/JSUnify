@@ -68,24 +68,38 @@ backtrack = (goal, rules) ->
     else if not goal instanceof Tin
         goal = parse(goal)
     for rule in rules
+        flag = true
         changes1 = []
-        console.log "Head unify: #{ toJson goal } -> #{ toJson rule.tin }"
+        console.log "Head unify: #{ toJson goal.unparse() } -> #{ toJson rule.tin.unparse() }"
         if unify(goal, rule.tin, changes1)
+            console.log "rule conditions - #{ toJson rule.conditions }"
             for cond in rule.conditions
-                #changes2 = []
-                #console.log "Refbind: #{ toJson rule.tin } -> #{ toJson cond }"
-                #cond._refbind(rule.tin)
+                # start log
+                #console.log "starting backtrack(#{ toJson cond.unparse() }, #{ toJson (r.tin.unparse() for r in rules) })"
+                console.log "\nstarting new backtrack"
+                # end log
+                if not backtrack(cond, rules)
+                    #console.log "Rolling back last unify for backtrack"
+                    #rollback(changes1)
+                    #console.log "Tins after rollback: #{ toJson goal } -> #{ toJson rule.tin }"
+                    #console.log ""
+                    console.log "Backtrack failed"
+                    flag = false
+                    break
 
-                #if unify(rule.tin, cond, changes2)
-                return backtrack(cond, rules)
-                #else
-                    #console.log "Rolling back last internal unify"
-                    #rollback(changes2)
+                    #return false
+            if not flag
+                continue
+            console.log "Backtrack succeeded"
+            return true
         else
             console.log "Rolling back last head unify"
             rollback(changes1)
             console.log "Tins after rollback: #{ toJson goal } -> #{ toJson rule.tin }"
+            console.log ""
 
+    console.log "ending backtrack with rule failure"
+    return false
 
 extern "backtrack", backtrack
 extern "Rule", Rule
