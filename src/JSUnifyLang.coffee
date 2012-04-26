@@ -35,6 +35,14 @@ class Rule
         @fact = fact
         @tin = parse(fact)
         conditions = if isarray conditions then (parse(c) for c in conditions) else []
+        
+        mergedVarlist = {}
+        for cond in conditions
+            for varKey, varValue of cond.varlist
+                mergedVarlist[varKey] = varValue
+        for c in conditions
+            c.varlist = mergedVarlist
+        
         @conditions = conditions
             
     iff: (conditional) ->
@@ -64,9 +72,9 @@ backtrack = (goal, rules) ->
         console.log "Head unify: #{ toJson goal } -> #{ toJson rule.tin }"
         if unify(goal, rule.tin, changes1)
             for cond in rule.conditions
-                changes2 = []
-                console.log "Refbind: #{ toJson rule.tin } -> #{ toJson cond }"
-                cond._refbind(rule.tin)
+                #changes2 = []
+                #console.log "Refbind: #{ toJson rule.tin } -> #{ toJson cond }"
+                #cond._refbind(rule.tin)
 
                 #if unify(rule.tin, cond, changes2)
                 return backtrack(cond, rules)
