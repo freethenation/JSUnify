@@ -64,19 +64,19 @@ backtrack = (goals, rules) ->
         changes = []
         log("TRY UNIFY: " + toJson(goal) + " AND " + toJson(rule.tin))
         if unify(goal, rule.tin, changes)
-            log("UNIFY SUCCESS")
-            rule.conditions.reverse()
+            log("UNIFY SUCCESS: " + toJson(goal) + " AND " + toJson(rule.tin))
+            rule.conditions.reverse() # RPK: prob should make this a for loop from length-1 to 0
             for cond in rule.conditions
                 goals.push(cond)
             rule.conditions.reverse()
             if goals.length == 0
-                return true
-            else if backtrack(goals, rules)
-                return true
+                return goal
+            else if backtrack(goals, rules) != null
+                return goal
         rollback(changes)
     log("UNIFY FAILURE... BACKTRACKING")
     goals.push(goal)
-    return false
+    return null
 
 extern "backtrack", backtrack
 extern "Rule", Rule
