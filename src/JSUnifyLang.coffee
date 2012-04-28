@@ -27,13 +27,27 @@ isvaluetype=(o) -> isbool(o) or isstr(o) or isnum(o)
 class Program
     constructor: () ->
         @rules=[]
-    load: (func) ->
-        func.call(this)
+    run: (goal) ->
+        goal = new Rule(goal)
+        return backtrack(goal, @rules)
+    rule: (fact, conditions...)->
+        @rules.push(new Rule(fact, conditions...))
+        return this
+    iff: (conditional)->
+        if @rules.length == 0 then throw "iff is invalid in this context. A rule must be created first!"
+        rule = @rules[@rules.length - 1]
+        rule.iff(conditional)
+        return this
     
 class Rule
     constructor: (fact, conditions...) ->
         @fact = fact
         @tin = parse(fact)
+        @conditions = []
+        for c in conditions
+            @iff(c)
+        
+        ###
         conditions = if isarray conditions then (parse(c) for c in conditions) else []
         
         mergedVarlist = {}
@@ -46,17 +60,22 @@ class Rule
             c.varlist = mergedVarlist
         
         @conditions = conditions
+        ###
             
     iff: (conditional) ->
-        conditions.push(conditional)
-    
-rule=(fact, conditions...)->
-    @rules.push(new Rule(fact, conditions...))
-    
-iff=(conditional)->
-    if @rules.length == 0 then throw "iff is invalid in this context. A rule must be created first!"
-    rule = @rules[@rules.length - 1]
-    rule.iff(conditional)
+        conditional = parse(conditional) 
+        if @conditions.length == 0
+            mergedVarlist = {}
+            for varKey, varValue of @tin.varlist
+                mergedVarlist[varKey] = varValue
+        else
+            mergedVarlist = @conditions[0].varlist
+        for varKey, varValue of conditional.varlist
+            if not varKey of mergedVarlist
+                mergedVarlist[varKey] = varValue
+        conditional.varlist = mergedVarlist
+        @conditions.push(conditional)
+        return this
 
 backtrack = (goals, rules) ->
     if goals instanceof Rule
@@ -82,6 +101,7 @@ backtrack = (goals, rules) ->
 
 extern "backtrack", backtrack
 extern "Rule", Rule
+extern "Program", Program
 
 # rule {d:[C,X,0]}
 # iff (vars)->typeof vars.C == "number"

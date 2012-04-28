@@ -1,4 +1,5 @@
 runtests=()->
+
     for prop of JSUnify
         window[prop] = JSUnify[prop]
     for prop of JSUnify.internal
@@ -23,6 +24,16 @@ runtests=()->
         # console.log goal.tin.toString()
         ok(goal.tin.get("P") == "Chicago")
         # console.log(goal.tin.get("P").toString())
+        
+    test "Snowy Chicago DSL", () ->
+        ok(new Program()
+            .rule({snowy:Var("X")},
+                {cold:Var("X")},
+                {rainy:Var("X")})
+            .rule({rainy:"cinci"})
+            .rule({rainy:"chicago"})
+            .rule({cold:"chicago"})
+            .run({snowy:Var("P")}).get("P") == "chicago")
    
     test "Family Tree", () ->
         rules = []
