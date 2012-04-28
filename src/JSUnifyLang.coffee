@@ -38,6 +38,10 @@ class Program
         rule = @rules[@rules.length - 1]
         rule.iff(conditional)
         return this
+    load: (rules)->
+        for rule in rules
+            @rules.push(rule)
+        return this
     
 class Rule
     constructor: (fact, conditions...) ->
@@ -46,21 +50,6 @@ class Rule
         @conditions = []
         for c in conditions
             @iff(c)
-        
-        ###
-        conditions = if isarray conditions then (parse(c) for c in conditions) else []
-        
-        mergedVarlist = {}
-        for cond in conditions
-            for varKey, varValue of cond.varlist
-                mergedVarlist[varKey] = varValue
-        for varKey, varValue of @tin.varlist
-            mergedVarlist[varKey] = varValue
-        for c in conditions
-            c.varlist = mergedVarlist
-        
-        @conditions = conditions
-        ###
             
     iff: (conditional) ->
         conditional = parse(conditional) 
@@ -83,9 +72,9 @@ backtrack = (goals, rules) ->
     goal = goals.pop()
     for rule in rules
         changes = []
-        log("TRY UNIFY: " + toJson(goal) + " AND " + toJson(rule.tin))
+        # log("TRY UNIFY: " + toJson(goal) + " AND " + toJson(rule.tin))
         if unify(goal, rule.tin, changes)
-            log("UNIFY SUCCESS: " + toJson(goal) + " AND " + toJson(rule.tin))
+            # log("UNIFY SUCCESS: " + toJson(goal) + " AND " + toJson(rule.tin))
             rule.conditions.reverse() # RPK: prob should make this a for loop from length-1 to 0
             for cond in rule.conditions
                 goals.push(cond)
@@ -95,13 +84,9 @@ backtrack = (goals, rules) ->
             else if backtrack(goals, rules) != null
                 return goal
         rollback(changes)
-    log("UNIFY FAILURE... BACKTRACKING")
+    # log("UNIFY FAILURE... BACKTRACKING")
     goals.push(goal)
     return null
 
-extern "backtrack", backtrack
 extern "Rule", Rule
 extern "Program", Program
-
-# rule {d:[C,X,0]}
-# iff (vars)->typeof vars.C == "number"
