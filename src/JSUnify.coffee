@@ -76,13 +76,6 @@ class Tin
     isfree:()->!@node?
     isHiddenVar: () -> isHiddenVar @name
     toString:() -> "new Tin(#{ toJson @name }, #{ toJson @node }, #{ toJson @varlist})"
-    
-    # EMS Replace the variable-tins in this head-tin with those of the same name
-    # ENS from the `from` head-tin. Used internally in backtracking.
-    _refbind: (from) ->
-        for key of @varlist
-            if key of from.varlist
-                @varlist[key] = from.varlist[key]
 
     get: (var_name) ->
         vartin = @varlist[var_name]
@@ -173,14 +166,16 @@ bind = (t1,t2, changes) ->
         t2.node = t1.node
         t2.varlist = t1.varlist
         changes.push( () -> t2.node = null; t2.varlist = null )
-    else if t1.chainlength > t2.chainlength
-        t1.node = t2.node
-        t1.varlist = t2.varlist
-        changes.push( () -> t1.node = null; t1.varlist = null )
+    else if t1.chainlength < t2.chainlength
+        #t1.node = t2.node
+        t1.varlist = t2
+        t1.chainlength += 1
+        changes.push( () -> t1.node = null; t1.varlist = null; t1.chainlength = 1 )
     else
-        t2.node = t1.node
-        t2.varlist = t1.varlist
-        changes.push( () -> t2.node = null; t2.varlist = null )
+        #t2.node = t1.node
+        t2.varlist = t1
+        t2.chainlength += 1
+        changes.push( () -> t2.node = null; t2.varlist = null; t2.chainlength = 1 )
     return true
 
 # unification!
