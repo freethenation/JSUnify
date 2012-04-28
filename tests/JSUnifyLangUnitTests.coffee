@@ -21,6 +21,7 @@ runtests=()->
         rules.push(new Rule({"snowy":Var("X")},{"rainy":Var("X")},{"cold":Var("X")}))
         ok(backtrack( goal, rules ) != null)
         # console.log goal.tin.toString()
+        console.log goal.tin
         ok(goal.tin.get("P") == "Chicago")
         # console.log(goal.tin.get("P").toString())
     

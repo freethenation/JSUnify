@@ -40,6 +40,8 @@ class Rule
         for cond in conditions
             for varKey, varValue of cond.varlist
                 mergedVarlist[varKey] = varValue
+        for varKey, varValue of @tin.varlist
+            mergedVarlist[varKey] = varValue
         for c in conditions
             c.varlist = mergedVarlist
         
