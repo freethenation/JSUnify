@@ -73,16 +73,26 @@ class Tin
         @varlist = if (isobj varlist) then varlist else null
         @chainlength = 1
         @name = name
-    isfree:()->!@node?
+    end_of_chain: () ->
+        t = this
+        t = t.varlist while t.varlist instanceof Tin
+        return t
+#    isfree:()->!@node?
+    isfree: () ->
+        t = @end_of_chain()
+        return t.node == null and t.varlist == null
     isHiddenVar: () -> isHiddenVar @name
     toString:() -> "new Tin(#{ toJson @name }, #{ toJson @node }, #{ toJson @varlist})"
 
     get: (var_name) ->
         vartin = @varlist[var_name]
+        if vartin != null and vartin != undefined
+            vartin = vartin.end_of_chain()
+
         if not vartin?
             throw "Variable #{var_name} not in this tin"
         else if not vartin.node? or vartin.node == null
-            return new Var(var_name)
+            return new Var(vartin.name)
         else if vartin.node instanceof Box
             return unboxit(vartin.node,vartin.varlist)
         else if vartin.node instanceof Var
@@ -91,11 +101,13 @@ class Tin
             return ( unboxit(n,vartin.varlist) for n in vartin.node )
         else
             throw "Unknown type in get"
+
     get_all: () ->
         j = {}
         for key of @varlist
             j[key] = @get(key) if !isHiddenVar key
         return j
+
     unparse: () ->
         unboxit @node
 
@@ -155,28 +167,33 @@ get_tin = (varlist,node) ->
     return varlist[node.name] if varlist?[node.name]?
     throw "Couldn't find node #{node.name} in varlist #{varlist}"
 
-bind = (t1,t2, changes) ->
+bind = (t,node,varlist,changes) ->
+    t = t.end_of_chain()
+    return false if not t.isfree()
+    t.node = node
+    t.varlist = varlist
+    changes.push( () -> t.node = null; t.varlist = null; t.chainlength = 1 )
+bind_tins = (t1,t2,changes) ->
     if not t1.isfree() and not t2.isfree()
         return false
     else if t1.isfree() and not t2.isfree()
-        t1.node = t2.node
-        t1.varlist = t2.varlist
-        changes.push( () -> t1.node = null; t1.varlist = null )
+        return bind(t1,t2.node,t2.varlist,changes)
     else if not t1.isfree() and t2.isfree()
-        t2.node = t1.node
-        t2.varlist = t1.varlist
-        changes.push( () -> t2.node = null; t2.varlist = null )
-    else if t1.chainlength < t2.chainlength
-        #t1.node = t2.node
-        t1.varlist = t2
-        t1.chainlength += 1
-        changes.push( () -> t1.node = null; t1.varlist = null; t1.chainlength = 1 )
-    else
-        #t2.node = t1.node
-        t2.varlist = t1
+        return bind(t2,t1.node,t1.varlist,changes)
+    else if t2.chainlength < t1.chainlength
+        console.log "trying to chain t2 (#{ toJson t2 }) to t1 (#{ toJson t1 })"
         t2.chainlength += 1
-        changes.push( () -> t2.node = null; t2.varlist = null; t2.chainlength = 1 )
-    return true
+        try
+            return bind( t2, null, t1, changes )
+        finally
+            console.log "after chain t2 (#{ toJson t2 }) to t1 (#{ toJson t1 })"
+    else
+        console.log "trying to chain t1 (#{ toJson t1 }) to t2 (#{ toJson t2 })"
+        t1.chainlength += 1
+        try
+            return bind( t1, null, t2, changes )
+        finally
+            console.log "after chain t1 (#{ toJson t1 }) to t2 (#{ toJson t2 })"
 
 # unification!
 _unify = (n1,v1,n2,v2,changes=[]) ->
@@ -186,31 +203,23 @@ _unify = (n1,v1,n2,v2,changes=[]) ->
     if n1 instanceof Variable and n2 instanceof Variable
         t1 = get_tin(v1, n1)
         t2 = get_tin(v2, n2)
-        if not bind(t1,t2,changes)
-            return false if _unify(t1.node, t1.varlist, t2.node, t2.varlist, changes) == false
+        if not bind_tins(t1,t2,changes)
+            return false if not _unify(t1.node, t1.varlist, t2.node, t2.varlist, changes)
     else if n1 instanceof Variable
         t1 = get_tin(v1,n1)
-        if t1.isfree()
-            t1.node = n2
-            t1.varlist = v2
-            changes.push( () -> t1.node = null; t1.varlist = null )
-        else
-            return false if _unify(t1.node,t1.varlist,n2,v2, changes) == false
+        if not bind(t1, n2, v2, changes)
+            return false if not _unify(t1.node,t1.varlist,n2,v2, changes)
     else if n2 instanceof Variable
         t2 = get_tin(v2,n2)
-        if t2.isfree()
-            t2.node = n1
-            t2.varlist = v1
-            changes.push( () -> t2.node = null; t2.varlist = null )
-        else
-            return false if _unify(t2.node,t2.varlist,n1,v1, changes) == false
+        if not bind(t2, n1, v1, changes)
+            return false if not _unify(t2.node,t2.varlist,n1,v1, changes)
     else
-        if n1 instanceof Box and n2 instanceof Box and isvaluetype(n1.value) and isvaluetype(n2.value) 
-            return if n1.value != n2.value then false else true
+        if n1 instanceof Box and n2 instanceof Box and isvaluetype(n1.value) and isvaluetype(n2.value)
+            return n1.value == n2.value
         else if isarray(n1) and isarray(n2)
             return false if n1.length != n2.length
             for idx in (num for num in [0..n1.length])
-                return false if _unify(n1[idx],v1,n2[idx],v2, changes) == false
+                return false if not _unify(n1[idx],v1,n2[idx],v2, changes)
     return true
 
 unify = (expr1,expr2,changes=[]) ->

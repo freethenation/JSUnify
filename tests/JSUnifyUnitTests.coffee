@@ -36,11 +36,11 @@ runtests=()->
         fulltest([[1,2,3]], [Var("y")], {}, {y:[1,2,3]})
     test "variable equal [[1,2,x],x] -> [y,3]", ()->
         fulltest(
-            [[1,2,Var("x")],Var("x")], 
-            [Var("y"),3], 
+            [[1,2,Var("x")],Var("x")],
+            [Var("y"),3],
             {x:3}, {y:[1,2,3]})
     test "unbound variable [y]->[x]", ()->
-        fulltest([Var("y")], [Var("x")], {y:Var("y")}, {x:Var("x")})
+        fulltest([Var("y")], [Var("x")], {y:Var("x")}, {x:Var("x")})
     test "variable equal [1,X,X] -> [Z,Z,1]", () ->
         fulltest([1, Var("X"), Var("X")], [Var("Z"), Var("Z"), 1], {X:1}, {Z:1})
             
