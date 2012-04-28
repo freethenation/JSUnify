@@ -55,51 +55,28 @@ iff=(conditional)->
     if @rules.length == 0 then throw "iff is invalid in this context. A rule must be created first!"
     rule = @rules[@rules.length - 1]
     rule.iff(conditional)
-    
-# EMS This algorithm cannot work -- the internal unify of rule.tin with cond cannot succeed;
-# EMS consider the rule ["Snowy", Var("X")] and the condition ["Rainy", Var("X")].
-# EMS Those will never unify, yet we need to ensure their X variables are the same.
-# EMS Perhaps we need to hack on the unify algo a bit more to allow this sort of thing?
-# EMS 
-# EMS We cannot just share the tins - ex. Snowy(A,B) -> Rainy(A) && Cold(B)
-backtrack = (goal, rules) ->
-    if goal instanceof Rule
-        goal = goal.tin
-    else if not goal instanceof Tin
-        goal = parse(goal)
+
+backtrack = (goals, rules) ->
+    if goals instanceof Rule
+        goals = [goals.tin]
+    goal = goals.pop()
     for rule in rules
-        flag = true
-        changes1 = []
-        console.log "Head unify: #{ toJson goal.unparse() } -> #{ toJson rule.tin.unparse() }"
-        if unify(goal, rule.tin, changes1)
-            console.log "rule conditions - #{ toJson rule.conditions }"
+        changes = []
+        log("TRY UNIFY: " + toJson(goal) + " AND " + toJson(rule.tin))
+        if unify(goal, rule.tin, changes)
+            log("UNIFY SUCCESS: " + toJson(goal) + " AND " + toJson(rule.tin))
+            rule.conditions.reverse() # RPK: prob should make this a for loop from length-1 to 0
             for cond in rule.conditions
-                # start log
-                #console.log "starting backtrack(#{ toJson cond.unparse() }, #{ toJson (r.tin.unparse() for r in rules) })"
-                console.log "\nstarting new backtrack"
-                # end log
-                if not backtrack(cond, rules)
-                    #console.log "Rolling back last unify for backtrack"
-                    #rollback(changes1)
-                    #console.log "Tins after rollback: #{ toJson goal } -> #{ toJson rule.tin }"
-                    #console.log ""
-                    console.log "Backtrack failed"
-                    flag = false
-                    break
-
-                    #return false
-            if not flag
-                continue
-            console.log "Backtrack succeeded"
-            return true
-        else
-            console.log "Rolling back last head unify"
-            rollback(changes1)
-            console.log "Tins after rollback: #{ toJson goal } -> #{ toJson rule.tin }"
-            console.log ""
-
-    console.log "ending backtrack with rule failure"
-    return false
+                goals.push(cond)
+            rule.conditions.reverse()
+            if goals.length == 0
+                return goal
+            else if backtrack(goals, rules) != null
+                return goal
+        rollback(changes)
+    log("UNIFY FAILURE... BACKTRACKING")
+    goals.push(goal)
+    return null
 
 extern "backtrack", backtrack
 extern "Rule", Rule

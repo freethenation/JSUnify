@@ -19,9 +19,10 @@ runtests=()->
         rules.push(new Rule({"rainy":"Chicago"}))
         rules.push(new Rule({"cold":"Chicago"}))
         rules.push(new Rule({"snowy":Var("X")},{"rainy":Var("X")},{"cold":Var("X")}))
-        ok(backtrack( goal, rules ))
-        console.log goal.tin
+        ok(backtrack( goal, rules ) != null)
+        # console.log goal.tin.toString()
         ok(goal.tin.get("P") == "Chicago")
+        # console.log(goal.tin.get("P").toString())
     
 extern=(name, o)->window[name] = o
 extern "RunJSUnifyLangUnitTests", runtests
