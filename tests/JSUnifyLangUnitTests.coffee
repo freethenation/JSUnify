@@ -22,6 +22,17 @@ runtests=()->
             .rule({rainy:"chicago"})
             .rule({cold:"chicago"})
             .run({snowy:Var("P")}).get("P") == "chicago")
+            
+    test "Is Int",()->
+        prog = new Program()
+            .rule({number:4.4})
+            .rule({number:9})
+            .rule({int:Var("X")}, 
+                {number:Var("X")},
+                (tin)->
+                    X = tin.get("X")
+                    return parseInt(X) == X)
+        ok(prog.run({int:Var("Y")}).get("Y") == 9)
    
     test "Family Tree", () ->
         rules = []
