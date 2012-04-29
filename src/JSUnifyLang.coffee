@@ -23,6 +23,7 @@ isstr=(o) -> typeof o == "string"
 isnum=(o) -> typeof o == "number"
 isobj=(o) -> o!=null and not isarray(o) and typeof o == "object"
 isvaluetype=(o) -> isbool(o) or isstr(o) or isnum(o)
+isfunc=(o)->!!(o && o.constructor && o.call && o.apply);
 
 class Program
     constructor: () ->
@@ -51,20 +52,28 @@ class Rule
         for c in conditions
             @iff(c)
             
-    iff: (conditional) ->
-        conditional = parse(conditional) 
+    iff: (condition) ->
+        if isfunc condition
+            condition = new Functioncondition(condition)
+        else
+            condition = parse(condition) 
         if @conditions.length == 0
             mergedVarlist = {}
             for varKey, varValue of @tin.varlist
                 mergedVarlist[varKey] = varValue
         else
             mergedVarlist = @conditions[0].varlist
-        for varKey, varValue of conditional.varlist
+        for varKey, varValue of condition.varlist
             if not varKey of mergedVarlist
                 mergedVarlist[varKey] = varValue
-        conditional.varlist = mergedVarlist
-        @conditions.push(conditional)
+        condition.varlist = mergedVarlist
+        @conditions.push(condition)
         return this
+
+class Functioncondition
+    constructor: (func)->
+        @func = func
+        @varlist = {}
 
 backtrack = (goals, rules) ->
     if goals instanceof Rule
@@ -90,3 +99,4 @@ backtrack = (goals, rules) ->
 
 extern "Rule", Rule
 extern "Program", Program
+extern "isfunc", isfunc
