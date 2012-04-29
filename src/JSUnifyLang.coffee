@@ -54,7 +54,7 @@ class Rule
             
     iff: (condition) ->
         if isfunc condition
-            condition = new Functioncondition(condition)
+            condition = new FunctionCondition(condition)
         else
             condition = parse(condition) 
         if @conditions.length == 0
@@ -70,7 +70,7 @@ class Rule
         @conditions.push(condition)
         return this
 
-class Functioncondition
+class FunctionCondition
     constructor: (func)->
         @func = func
         @varlist = {}
@@ -99,4 +99,3 @@ backtrack = (goals, rules) ->
 
 extern "Rule", Rule
 extern "Program", Program
-extern "isfunc", isfunc
