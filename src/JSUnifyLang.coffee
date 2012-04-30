@@ -58,22 +58,34 @@ backtrack = (goals, rules) ->
         goals = [goals.tin]
     goal = goals.pop()
     for rule in rules
-        changes = []
-        # log("TRY UNIFY: " + toJson(goal) + " AND " + toJson(rule.tin))
-        if unify(goal, rule.tin, changes)
-            # log("UNIFY SUCCESS: " + toJson(goal) + " AND " + toJson(rule.tin))
-            rule.conditions.reverse() # RPK: prob should make this a for loop from length-1 to 0
-            for cond in rule.conditions
-                goals.push(cond)
-            rule.conditions.reverse()
-            if goals.length == 0
-                return goal
-            else if backtrack(goals, rules) != null
-                return goal
-        rollback(changes)
+        if goal instanceof FunctionCondition
+            ret = tryFunctionCondition(goal, rule, goals, rules)
+        else
+            ret = tryUnifyCondition(goal, rule, goals, rules)
+        if ret != null
+            return ret
     # log("UNIFY FAILURE... BACKTRACKING")
     goals.push(goal)
     return null
+    
+tryUnifyCondition = (goal, rule, goals, rules)->
+    # log("TRY UNIFY: " + toJson(goal) + " AND " + toJson(rule.tin))
+    changes = []
+    if unify(goal, rule.tin, changes)
+        # log("UNIFY SUCCESS: " + toJson(goal) + " AND " + toJson(rule.tin))
+        rule.conditions.reverse() # RPK: prob should make this a for loop from length-1 to 0
+        for cond in rule.conditions
+            goals.push(cond)
+        rule.conditions.reverse()
+        if goals.length == 0
+            return goal
+        else if backtrack(goals, rules) != null
+            return goal
+    rollback(changes)
+    return null
+    
+tryFunctionCondition = (goal, rule, goals, rules)->
+    if goal.func(goal) then return  goal else null
 
 extern "Rule", Rule
 extern "Program", Program
