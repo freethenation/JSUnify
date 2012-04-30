@@ -1,7 +1,3 @@
-# TODO:
-#   2) Support for _:_
-#   5) Clean up functions?
-
 # utils
 log=(o)->console.log o
 dir=(o)->console.dir o
@@ -26,6 +22,7 @@ isstr=(o) -> typeof o == "string"
 isnum=(o) -> typeof o == "number"
 isobj=(o) -> o!=null and not isarray(o) and typeof o == "object"
 isvaluetype=(o) -> isbool(o) or isstr(o) or isnum(o)
+isfunc=(o) -> !!(o && o.constructor && o.call && o.apply)
 
 # util functions to convert various data types to strings
 toJson=(elem) ->

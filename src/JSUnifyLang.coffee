@@ -1,29 +1,8 @@
-
 # utils
-log=(o)->console.log o
-dir=(o)->console.dir o
-len=(o)-> o.length
 if typeof exports == 'undefined' then window.JSUnifyLang={}
 extern=(name, o)->if typeof exports == 'undefined' then window.JSUnifyLang[name] = o else exports[name] = o
 if typeof exports == 'undefined' then window.JSUnifyLang.internal={} else exports.internal = {}
 internal=(name, o)->if typeof exports == 'undefined' then window.JSUnifyLang.internal[name] = o else exports.internal[name] = o
-str=(o)->
-    if typeof o == "undefined"
-        return "undefined"
-    else if o==null
-        return "null"
-    else
-        return o.toString()
-
-# type testing functions
-isundef=(o) -> typeof o == "undefined"
-isbool=(o) -> typeof o == "boolean"
-isarray=(o) -> o? && Array.isArray o
-isstr=(o) -> typeof o == "string"
-isnum=(o) -> typeof o == "number"
-isobj=(o) -> o!=null and not isarray(o) and typeof o == "object"
-isvaluetype=(o) -> isbool(o) or isstr(o) or isnum(o)
-isfunc=(o)->!!(o && o.constructor && o.call && o.apply);
 
 class Program
     constructor: () ->
