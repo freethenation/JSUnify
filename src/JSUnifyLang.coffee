@@ -70,10 +70,9 @@ class Rule
         @conditions.push(condition)
         return this
 
-class FunctionCondition
-    constructor: (func)->
-        @func = func
-        @varlist = {}
+class FunctionCondition extends Tin
+    constructor: (@func)->
+        super(null, null, {})
 
 backtrack = (goals, rules) ->
     if goals instanceof Rule
