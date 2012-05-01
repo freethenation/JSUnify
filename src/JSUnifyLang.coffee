@@ -43,7 +43,7 @@ class Rule
         else
             mergedVarlist = @conditions[0].varlist
         for varKey, varValue of condition.varlist
-            if not varKey of mergedVarlist
+            if mergedVarlist[varKey] == undefined
                 mergedVarlist[varKey] = varValue
         condition.varlist = mergedVarlist
         @conditions.push(condition)
@@ -52,6 +52,15 @@ class Rule
 class FunctionCondition extends Tin
     constructor: (@func)->
         super(null, null, {})
+    bind: (var_name, value) ->
+        ver = @varlist[var_name].end_of_chain()
+        if ver.isfree()
+            ver.node = boxit(value,{})
+            return true
+        else if unboxit(ver.node) == value
+            return true
+        else
+            return false
 
 backtrack = (goals, rules) ->
     if goals instanceof Rule

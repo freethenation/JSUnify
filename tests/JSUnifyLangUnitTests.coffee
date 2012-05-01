@@ -16,24 +16,57 @@ runtests=()->
     test "Snowy Chicago", () ->
         ok(new Program()
             .rule({snowy:Var("X")},
-                {cold:Var("X")},
-                {rainy:Var("X")})
-            .rule({rainy:"cinci"})
-            .rule({rainy:"chicago"})
-            .rule({cold:"chicago"})
+                {cold:[Var("X"),Var("Y")]},
+                {rainy:[Var("X"),Var("Y")]})
+            .rule({rainy:["cinci",1]})
+            .rule({rainy:["chicago",1]})
+            .rule({cold:["chicago",1]})
             .run({snowy:Var("P")}).get("P") == "chicago")
             
     test "Is Int",()->
         prog = new Program()
             .rule({number:4.4})
             .rule({number:9})
-            .rule({int:Var("X")}, 
+            .rule({int:Var("X")},
                 {number:Var("X")},
                 (tin)->
                     X = tin.get("X")
                     return parseInt(X) == X)
         ok(prog.run({int:Var("Y")}).get("Y") == 9)
-   
+
+    test "N1 Is N-1",()->
+        prog = new Program()
+            .rule({number:12})
+            .rule({minus:Var("N1")},
+                {number:Var("N")},
+                (tin)->
+                    N = tin.get("N")
+                    return tin.bind("N1",N-1)
+            )
+        ok(prog.run({minus:Var("Q")}).get("Q") == 11)
+
+    test "Illegal rebind", ()->
+        prog = new Program()
+            .rule({number:12})
+            .rule({minus:Var("N1")},
+                {number:Var("N")},
+                (tin)->
+                    N = tin.get("N")
+                    return tin.bind("N",N+1)
+            )
+        ok(prog.run({minus:Var("Q")}) == null)
+
+    test "Legal rebind - values equal", ()->
+        prog = new Program()
+            .rule({number:12})
+            .rule({minus:Var("N")},
+                {number:Var("N")},
+                (tin)->
+                    N = tin.get("N")
+                    return tin.bind("N",N)
+            )
+        ok(prog.run({minus:Var("Q")}).get("Q") == 12)
+
     test "Family Tree", () ->
         rules = []
         rules.push(new Rule({"male":["james1"]}))

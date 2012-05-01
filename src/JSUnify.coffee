@@ -178,19 +178,11 @@ bind_tins = (t1,t2,changes) ->
     else if not t1.isfree() and t2.isfree()
         return bind(t2,t1.node,t1.varlist,changes)
     else if t2.chainlength < t1.chainlength
-        console.log "trying to chain t2 (#{ toJson t2 }) to t1 (#{ toJson t1 })"
         t2.chainlength += 1
-        try
-            return bind( t2, null, t1, changes )
-        finally
-            console.log "after chain t2 (#{ toJson t2 }) to t1 (#{ toJson t1 })"
+        return bind( t2, null, t1, changes )
     else
-        console.log "trying to chain t1 (#{ toJson t1 }) to t2 (#{ toJson t2 })"
         t1.chainlength += 1
-        try
-            return bind( t1, null, t2, changes )
-        finally
-            console.log "after chain t1 (#{ toJson t1 }) to t2 (#{ toJson t2 })"
+        return bind( t1, null, t2, changes )
 
 # unification!
 _unify = (n1,v1,n2,v2,changes=[]) ->
