@@ -67,6 +67,51 @@ runtests=()->
             )
         ok(prog.run({minus:Var("Q")}).get("Q") == 12)
 
+    test "Deriv 4 * x + 7 * x", () ->
+        C = Var("C")
+        X = Var("X")
+        U = Var("U")
+        DU = Var("DU")
+        V = Var("V")
+        DV = Var("DV")
+        N = Var("N")
+        N1 = Var("N1")
+
+        prog = new Program()
+            .rule( {'deriv':[C,X,0]}, (tin)->isnum(tin.get("C")) )
+            .rule( {'deriv':[X,X,1]} )
+            .rule( {'deriv':[
+                        {'mult':[C,U]},
+                        X,
+                        {'mult':[C,DU]}
+                    ]},
+                    (tin)->isnum(tin.get("C")),
+                    {'deriv':[U,X,DU]} )
+            .rule( {'deriv':[
+                        {'mult':[U,V]},
+                        X,
+                        {'add': [
+                            {'mult':[U,DV]},
+                            {'mult':[V,DU]}
+                        ]}]},
+                    {'deriv': [U,X,DU]},
+                    {'deriv': [V,X,DV]} )
+            .rule( {'deriv':[
+                        {'add': [U,V]},
+                        X,
+                        {'add': [DU,DV]}]},
+                    {'deriv':[U,X,DU]},
+                    {'deriv':[V,X,DV]} )
+            .rule( {'deriv':[
+                        {'sub': [U,V]},
+                        X,
+                        {'sub': [DU,DV]}]},
+                    {'deriv':[U,X,DU]},
+                    {'deriv':[V,X,DV]} )
+        
+        console.log prog.run({'deriv':[{'add':[{'mult':[7,"x"]},{'mult':[4,'x']}]}, 'x', Var("DR")]})
+        ok(true)
+
     test "Family Tree", () ->
         rules = []
         rules.push(new Rule({"male":["james1"]}))
