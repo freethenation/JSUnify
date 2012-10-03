@@ -1,12 +1,4 @@
 runtests=()->
-    for prop of JSUnify
-        window[prop] = JSUnify[prop]
-    for prop of JSUnify.internal
-        window[prop] = JSUnify.internal[prop]
-    for prop of JSUnifyLang
-        window[prop] = JSUnifyLang[prop]
-    for prop of JSUnifyLang.internal
-        window[prop] = JSUnifyLang.internal[prop]
 
     test "placeholder", ()->
         ok(true)
