@@ -2,8 +2,8 @@ coffee = require 'coffee-script'
 fs = require 'fs'
 log=console.log
 
-paths=['./src/JSUnify.coffee', './src/JSUnifyLang.coffee', './src/JSUnifySugar.coffee']
-testPaths=['./tests/JSUnifyUnitTests.coffee', './tests/JSUnifyLangUnitTests.coffee']
+paths=['./src/unify.coffee', './src/JSUnifyRuntime.coffee', './src/JSUnifyCompiler.coffee']
+testPaths=['./tests/unifyTests.coffee', './tests/JSUnifyRuntimeTests.coffee']
 buildTasks={}
 buildTask=(name, callback)->
     buildTasks[name]=()->
