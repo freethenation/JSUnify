@@ -835,19 +835,6 @@
   extern("RunJSUnifyUnitTests", runtests);
 
   runtests = function() {
-    var prop;
-    for (prop in JSUnify) {
-      window[prop] = JSUnify[prop];
-    }
-    for (prop in JSUnify.internal) {
-      window[prop] = JSUnify.internal[prop];
-    }
-    for (prop in JSUnifyLang) {
-      window[prop] = JSUnifyLang[prop];
-    }
-    for (prop in JSUnifyLang.internal) {
-      window[prop] = JSUnifyLang.internal[prop];
-    }
     test("placeholder", function() {
       return ok(true);
     });

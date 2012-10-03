@@ -4,7 +4,8 @@ log=console.log
 uglify = require "uglify-js"
 
 paths=['./src/unify.coffee', './src/JSUnifyRuntime.coffee', './src/JSUnifyCompiler.coffee']
-testPaths=['./tests/unifyTests.coffee', './tests/JSUnifyRuntimeTests.coffee']
+testPaths=['./tests/unifyTests.coffee', './tests/JSUnifyRuntimeTests.coffee','./tests/JSUnifyCompilerTests.coffee']
+depends=['./submodule/esprima/esprima.js']
 buildTasks={}
 buildTask=(name, callback)->
     buildTasks[name]=()->
@@ -13,11 +14,15 @@ buildTask=(name, callback)->
         log "done!"
     task 'build:'+name, "builds '#{name}.js'", buildTasks[name]
 task 'build', 'does a full build of the project including unit tests', ()->(buildTasks[task]() for task of buildTasks)
+
 buildTask 'unify', ()->build(paths.slice(0,1),'./bin/unify')
 buildTask 'JSUnifyRuntime', ()->build(paths.slice(0,2),'./bin/JSUnifyRuntime')
 buildTask 'JSUnifyCompiler', ()->build(paths.slice(0,3),'./bin/JSUnifyCompiler')
+buildTask 'JSUnifyCompilerWithDependencies', ()->build(paths.slice(0,3),'./bin/JSUnifyCompilerWithDependencies',depends)
+
 buildTask 'unifyTests', ()->build(paths.slice(0,1).concat(testPaths.slice(0,1)), './tests/unifyTests')
 buildTask 'JSUnifyRuntimeTests', ()->build(paths.slice(0,2).concat(testPaths.slice(0,2)), './tests/JSUnifyRuntimeTests')
+buildTask 'JSUnifyCompilerTests', ()->build(paths.slice(0,3).concat(testPaths.slice(0,3)),'./tests/JSUnifyCompiler',depends)
 
 minify=(inputFile)->
     ast = uglify.parser.parse(inputFile); # parse code and get the initial AST
@@ -25,14 +30,17 @@ minify=(inputFile)->
     ast = uglify.uglify.ast_squeeze(ast); # get an AST with compression optimizations
     return uglify.uglify.gen_code(ast); # compressed code here
         
-build=(inputPaths, outputPath)->
+build=(inputPaths, outputPath, inputJSPaths=[])->
     outputFile = []
     for path in inputPaths
         outputFile.push fs.readFileSync(path, 'utf8')
         outputFile.push "#File '#{path}'"
     outputFile = outputFile.join('\n')
     outputFile = coffee.compile(outputFile)
+    for path in inputJSPaths
+        outputFile = fs.readFileSync(path, 'utf8') + '\n' + outputFile
     fs.writeFileSync(outputPath + '.js', outputFile)
+    #if inputJSPaths.length != 0 then return
     outputFile = minify(outputFile)
     if outputFile? then fs.writeFileSync(outputPath + '.min.js', outputFile)
     
