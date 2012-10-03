@@ -1,9 +1,3 @@
-# utils
-if typeof exports == 'undefined' then window.JSUnifyLang={}
-extern=(name, o)->if typeof exports == 'undefined' then window.JSUnifyLang[name] = o else exports[name] = o
-if typeof exports == 'undefined' then window.JSUnifyLang.internal={} else exports.internal = {}
-internal=(name, o)->if typeof exports == 'undefined' then window.JSUnifyLang.internal[name] = o else exports.internal[name] = o
-
 class Program
     constructor: () ->
         @rules=[]

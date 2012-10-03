@@ -1,5 +1,4 @@
 runtests=()->
-
     for prop of JSUnify
         window[prop] = JSUnify[prop]
     for prop of JSUnify.internal
@@ -153,5 +152,4 @@ runtests=()->
         ok(res != null)
         ok(res.get("Dad") == "james1")
 
-extern=(name, o)->window[name] = o
 extern "RunJSUnifyLangUnitTests", runtests

@@ -101,18 +101,4 @@ runtests=()->
         ok( obj1.toString() == cobj1.toString() )
         ok( obj2.toString() == cobj2.toString() )
                    
-dir=(o)->console.dir o
-len=(o)-> o.length
-str=(o)->
-    if typeof o == "undefined"
-        "undefined"
-    else if o==null
-        "null"
-    else
-        o.toString()
-extern=(name, o)->window[name] = o
 extern "RunJSUnifyUnitTests", runtests
-extern "str", str
-extern "len", len
-#extern "log", log
-extern "dir", dir
