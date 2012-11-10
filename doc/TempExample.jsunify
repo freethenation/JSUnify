@@ -1,0 +1,22 @@
+//test "Snowy Chicago", () ->
+snowy(X) == cold(X, Y) && rainy(X,Y);
+rainy('cinci',1);
+rainy('chicago', 1);
+cold('chicago', 1);
+
+//test "N1 Is N-1",()->
+number(12);
+minus(N1) == number(N) && 
+	(function(tin) {
+		var N = tin.get("N");
+		return tin.bind("N1", N-1);
+	});
+
+// test "Is Int",()->
+number(4.4);
+number(9);
+integer(X) == number(X) &&
+	(function(tin) {
+		var X = tin.get("X");
+		return parseInt(X) == X;
+	});
