@@ -5,7 +5,7 @@ uglify = require "uglify-js"
 
 paths=['./src/unify.coffee', './src/JSUnifyRuntime.coffee', './src/JSUnifyCompiler.coffee']
 testPaths=['./tests/unifyTests.coffee', './tests/JSUnifyRuntimeTests.coffee','./tests/JSUnifyCompilerTests.coffee']
-depends=['./submodule/esprima/esprima.js']
+depends=['./submodule/node-falafel/index.js', './submodule/esprima/esprima.js']
 buildTasks={}
 buildTask=(name, callback)->
     buildTasks[name]=()->
