@@ -5,8 +5,11 @@ compile=(src)->
 		if not node.inFunc?
 			node.inFunc = if node.type == "FunctionExpression" then true else inFunc(node.parent)
 		return node.inFunc
-	
-	return falafel(src, (node)->
+	ret = []
+	ret.push "//This program was complied using JSUnify compiler version 1.0"
+	ret.push "var Var = JSUnify.Var;"
+	ret.push "var p = new JSUnify.Program();"
+	ret.push falafel(src, (node)->
 		if inFunc(node) then return # If we are inside a function def then we do not want to do any processing
 		s = []
 		if node.type == "CallExpression"
@@ -27,7 +30,8 @@ compile=(src)->
 			s.push "p.rule("
 			s.push node.expression.source()
 			s.push ");"
-		if s.length > 0 then node.update(s.join(''))
+		if s.length > 0 then node.update(s.join(""))
 		return
-	)
+	).toString()
+	return  ret.join('\n')
 extern "compile", compile

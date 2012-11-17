@@ -504,8 +504,8 @@
       fact = arguments[0], conditions = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
       this.rules.push((function(func, args, ctor) {
         ctor.prototype = func.prototype;
-        var child = new ctor, result = func.apply(child, args), t = typeof result;
-        return t == "object" || t == "function" ? result || child : child;
+        var child = new ctor, result = func.apply(child, args);
+        return Object(result) === result ? result : child;
       })(Rule, [fact].concat(__slice.call(conditions)), function(){}));
       return this;
     };
