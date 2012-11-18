@@ -33,7 +33,7 @@ compile=(src)->
 		if inCallExpr(node)
 			if node.type == "Identifier"
 				s.push "Var(\"#{node.name}\")"
-			if node.type == "BinaryExpression"
+			if node.type == "BinaryExpression" || node.type == "LogicalExpression"
 				ops =
 					"+":"add"
 					"-":"sub"
