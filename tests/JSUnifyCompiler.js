@@ -4528,26 +4528,27 @@ else { window.falafel = falafel; }
 
   extern("Program", Program);
 
-  falafel = (typeof window !== "undefined" && window !== null) && (window.falafel != null) ? window.falafel : irequire('falafel');
+  falafel = (typeof window !== "undefined" && window !== null) && (window.falafel != null) ? window.falafel : require('falafel');
 
   compile = function(src) {
-    var inFunc, ret;
-    inFunc = function(node) {
+    var ignore, ret;
+    ignore = function(node) {
       if (!(node != null)) {
         return false;
       }
-      if (!(node.inFunc != null)) {
-        node.inFunc = node.type === "FunctionExpression" ? true : inFunc(node.parent);
+      if (!(node.ignore != null)) {
+        node.ignore = node.type === "FunctionExpression" || node.type === "AssignmentExpression" ? true : ignore(node.parent);
       }
-      return node.inFunc;
+      return node.ignore;
     };
     ret = [];
     ret.push("//This program was complied using JSUnify compiler version 1.0");
+    ret.push("settings = {};");
     ret.push("var Var = JSUnify.Var;");
     ret.push("var p = new JSUnify.Program();");
     ret.push(falafel(src, function(node) {
-      var n, s;
-      if (inFunc(node)) {
+      var n, ops, s;
+      if (ignore(node)) {
         return;
       }
       s = [];
@@ -4573,12 +4574,22 @@ else { window.falafel = falafel; }
         s.push(",");
         s.push(node.right.source());
       }
-      if (node.type === "BinaryExpression") {
+      if (node.type === "BinaryExpression" && node.operator === "==") {
         s.push(node.left.source());
         s.push(",");
         s.push(node.right.source());
+      } else if (node.type === "BinaryExpression") {
+        ops = {
+          "+": "add",
+          "-": "sub",
+          "*": "mult",
+          "/": "div"
+        };
+        if (ops[node.operator] != null) {
+          s.push("\"" + ops[node.operator] + "\":[" + (node.left.source()) + "," + (node.right.source()) + "]");
+        }
       }
-      if (node.type === "ExpressionStatement") {
+      if (node.type === "ExpressionStatement" && (node.expression.ignore != null) && !node.expression.ignore) {
         s.push("p.rule(");
         s.push(node.expression.source());
         s.push(");");

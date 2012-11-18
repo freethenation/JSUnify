@@ -1,4 +1,5 @@
 //test "Snowy Chicago", () ->
+settings.name = "SnowyChicago";
 snowy(X) == cold(X, Y) && rainy(X,Y);
 rainy('cinci',1);
 rainy('chicago', 1);
@@ -20,3 +21,12 @@ integer(X) == number(X) &&
 		var X = tin.get("X");
 		return parseInt(X) == X;
 	});
+	
+deriv(C,X,0) == constant(C);
+//deriv(X,X,1) == !;
+deriv(-F, X, -G) == deriv(F, X, G);
+deriv(F + G, X, H + I) == deriv(F, X, H), deriv(G, X, I);
+deriv(F * G, X, H * G + F * I) == deriv(F, X, H), deriv(G, X, I);
+deriv(pow(F, C), X, c * pow(F, C - 1) * G) == constant(C), deriv(F, X, G);
+deriv(F / G, X, H / G - pow(F / G, 2) * I) == deriv(F, X, H), deriv(G, X, I);
+deriv(log(F), X, H * pow(F, -1) == deriv(F, X, H);
