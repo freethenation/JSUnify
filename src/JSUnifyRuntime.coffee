@@ -1,6 +1,7 @@
 class Program
     constructor: () ->
         @rules=[]
+        @settings={}
     run: (goal) ->
         goal = new Rule(goal)
         return backtrack(goal, @rules)

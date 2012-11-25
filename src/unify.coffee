@@ -13,6 +13,11 @@ str=(o)->
         return "null"
     else
        return o.toString()
+mergeJson=()->
+    ret = {}
+    for arg in arguments
+        ret[name] = value for name, value of arg
+    return ret
 
 # type testing functions
 isundef=(o) -> typeof o == "undefined"
