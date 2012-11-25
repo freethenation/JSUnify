@@ -53,15 +53,21 @@ compile=(src, settings={})->
             node.ignore = node.parent.ignore
         else
             node.ignore = true
-            
-    ret.push "//This program was complied using JSUnify compiler version 1.0"
-    #ret.push "settings = {};"
-    #ret.push "var Var = JSUnify.Var;"
-    #ret.push "var p = new JSUnify.Program();"
+    
+    if  not settings.isExpression? or not settings.isExpression
+        ret.push "//This program was complied using JSUnify compiler version 1.0"
+        ret.push "(function(){"
+        ret.push "var p = new JSUnify.Program();"
+        ret.push "var prog = p;"
+        ret.push "var settings = p.settings;"
+        ret.push "var Var = JSUnify.Var;"
     
     ret.push falafel(src, {}, depthFirstFn, breathFirstFn).toString()
-    for name, value of settings
-        ret.push "settings[\"#{name}\"] = #{value};"
+    if  not settings.isExpression? or not settings.isExpression
+        for name, value of settings
+            ret.push "settings[\"#{name}\"] = #{value};"
+        ret.push "return p;"
+        ret.push "})();"
         
     #ret.push "if(typeof(window) == 'undefined') { } else {window.JSUnify.programs}"
     return  ret.join('\n')
