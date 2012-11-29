@@ -57,6 +57,9 @@ compile=(src, settings={})->
     if  not settings.isExpression? or not settings.isExpression
         ret.push "//This program was complied using JSUnify compiler version 1.0"
         ret.push "(function(){"
+        ret.push "var JSUnify;"
+        ret.push "if (typeof window != 'undefined' && typeof window.JSUnify != 'undefined' ) { JSUnify = window.JSUnify; }"
+        ret.push "else { JSUnify = require('JSUnifyCompiler'); }"
         ret.push "var p = new JSUnify.Program();"
         ret.push "var prog = p;"
         ret.push "var settings = p.settings;"
