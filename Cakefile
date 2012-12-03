@@ -20,7 +20,9 @@ task 'build', 'does a full build of the project including unit tests', ()->(buil
 
 buildTask 'unify.js', ()->build(paths.slice(0,1),'./bin/unify.js')
 buildTask 'JSUnifyRuntime.js', ()->build(paths.slice(0,2),'./bin/JSUnifyRuntime.js')
-buildTask 'JSUnifyCompiler.js', ()->build(paths.slice(0,3),'./bin/JSUnifyCompiler.js')
+buildTask 'JSUnifyCompiler.js', ()->
+    build(paths.slice(0,3),'./bin/JSUnifyCompiler.js')
+    fs.writeFileSync('./bin/falafel.js', fs.readFileSync('./submodule/node-falafel/index.js', 'utf8'))
 buildTask 'JSUnifyCompilerWithDependencies.js', ()->build(paths.slice(0,3),'./bin/JSUnifyCompilerWithDependencies.js',depends)
 buildTask 'jsunify',  'builds jsunify, a command line compiler for the JSUnify language', ()->build(['./src/jsunify.coffee'],'./bin/jsunify')
 
@@ -44,7 +46,6 @@ build=(inputPaths, outputPath, inputJSPaths=[])->
     for path in inputJSPaths
         outputFile = fs.readFileSync(path, 'utf8') + '\n' + outputFile
     fs.writeFileSync(outputPath, outputFile)
-    #if inputJSPaths.length != 0 then return
     outputFile = minify(outputFile)
     if outputFile? and outputPath.indexOf('.js') > -1 then fs.writeFileSync(outputPath.replace('.js', '.min.js'), outputFile)
     

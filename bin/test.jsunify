@@ -1,0 +1,6 @@
+//test "Snowy Chicago", () ->
+settings.name = "SnowyChicago";
+snowy(X) == cold(X, Y) && rainy(X,Y);
+rainy('cinci',1);
+rainy('chicago', 1);
+cold('chicago', 1);

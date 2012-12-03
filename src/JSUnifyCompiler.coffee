@@ -1,4 +1,4 @@
-falafel = if  window? and window.falafel? then window.falafel else require('falafel')
+falafel = if  window? and window.falafel? then window.falafel else require('falafel.js')
 compile=(src, settings={})->
     inCallExpr=(node)->
         if not node? then return false
@@ -55,7 +55,7 @@ compile=(src, settings={})->
             node.ignore = true
     
     if  not settings.isExpression? or not settings.isExpression
-        ret.push "//This program was complied using JSUnify compiler version 1.0"
+        ret.push "//This program was complied using JSUnify compiler v0.8.0"
         ret.push "(function(){"
         ret.push "var JSUnify;"
         ret.push "if (typeof window != 'undefined' && typeof window.JSUnify != 'undefined' ) { JSUnify = window.JSUnify; }"
@@ -69,7 +69,8 @@ compile=(src, settings={})->
     if  not settings.isExpression? or not settings.isExpression
         for name, value of settings
             ret.push "settings[\"#{name}\"] = #{value};"
-        ret.push "return p;"
+        ret.push "if (typeof module !== \"undefined\" && typeof require !== \"undefined\") {  module.exports = p; }"
+        ret.push "else { window[settings.name] = p; }"
         ret.push "})();"
         
     #ret.push "if(typeof(window) == 'undefined') { } else {window.JSUnify.programs}"
