@@ -1,0 +1,46 @@
+{
+   "main":"./lib/JSUnifyCompiler",
+   "name":"jsunify",
+   "bin":{
+      "jsunify":"./bin/jsunify"
+   },
+   "bugs":"https://github.com/freethenation/JSUnify/issues",
+   "description":"A javascript unifying rule engine similar to prolog",
+   "devDependencies":{
+      "uglify-js":">=1.3.4",
+      "coffee-script":">=1.4.0"
+   },
+   "dependencies" : {
+        "esprima" : ">=1.0.0",
+        "commander":">=1.1.1"
+    },
+   "directories":{
+      "lib":"./lib"
+   },
+   "engines":{
+      "node":">=0.8.0"
+   },
+   "homepage":"http://coffeescript.org",
+   "keywords":[
+      "language",
+      "coffeescript",
+      "compiler",
+      "rule",
+      "unify",
+      "engine",
+      "unification",
+      "jsunify",
+      "dsl"
+   ],
+   "licenses":[
+      {
+         "type":"MIT",
+         "url":"https://raw.github.com/freethenation/JSUnify/master/LICENSE"
+      }
+   ],
+   "repository":{
+      "type":"git",
+      "url":"git://github.com/freethenation/JSUnify.git"
+   },
+   "version":"0.8.0"
+}

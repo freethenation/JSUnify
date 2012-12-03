@@ -1,4 +1,4 @@
-falafel = if  window? and window.falafel? then window.falafel else require('falafel.js')
+falafel = if  window? and window.falafel? then window.falafel else require('./falafel.js')
 compile=(src, settings={})->
     inCallExpr=(node)->
         if not node? then return false
@@ -58,8 +58,8 @@ compile=(src, settings={})->
         ret.push "//This program was complied using JSUnify compiler v0.8.0"
         ret.push "(function(){"
         ret.push "var JSUnify;"
-        ret.push "if (typeof window != 'undefined' && typeof window.JSUnify != 'undefined' ) { JSUnify = window.JSUnify; }"
-        ret.push "else { JSUnify = require('JSUnifyCompiler'); }"
+        ret.push "if (typeof module !== \"undefined\" && typeof require !== \"undefined\") { JSUnify = require('./JSUnifyCompiler.js'); }"
+        ret.push "else { JSUnify = window.JSUnify; }"
         ret.push "var p = new JSUnify.Program();"
         ret.push "var prog = p;"
         ret.push "var settings = p.settings;"
