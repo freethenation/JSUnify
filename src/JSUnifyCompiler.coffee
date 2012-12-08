@@ -1,30 +1,32 @@
 falafel = if  window? and window.falafel? then window.falafel else require('./falafel.js')
 
 compile=(src, settings={})->
-    
+
     depthFirstFn = (node)->
         if node.unifyType == null then return
+        indent = (new Array(node.unifyIndent + 5)).join(" ")
         if node.unifyType == "JsUnifyCall"
-            node.update(node.arguments[0].source())
-        else if node.unifyType == "ProgramRoot"
             node.update([
-                "(function(){",
-                "return new Program()",
-                node.body.source(),
-                ")()"
-                ].join("\n"))
+                "(function(){"
+                "var JSUnify = typeof(module) == 'undefined' || typeof(require) == 'undefined' ? window.JSUnify : require('jsunify');"
+                "var Var = JSUnify.Var;"
+                if node.isUnifyProg then "return new JSUnify.Program()\n#{ node.arguments[0].source() }" else "return #{ node.arguments[0].source() };"
+                "})()"
+                ].join("\n" + indent))
+        else if node.unifyType == "ProgramRoot"
+            node.update(node.body.source())
         else if node.unifyType == "OutCall"
             if node.type == "LogicalExpression" or node.type == "BinaryExpression"
                 node.update("#{ node.left.source() }, #{ node.right.source() }")
             else if node.type == "ExpressionStatement"
-                node.update(".rule(#{ node.expression.source() })")
+                node.update("#{ indent }.rule(#{ node.expression.source() })")
             else if node.type == "BlockStatement"
                 node.update((n.source() for n in node.body).join('\n'))
         else if node.unifyType == "ExprRoot" or node.unifyType == "InCall"
             if node.type == "CallExpression"
                 node.update([
-                    "{#{node.callee.name}:[",
-                    (n.source() for n in node.arguments).join(','),
+                    "{#{node.callee.name}:["
+                    (n.source() for n in node.arguments).join(',')
                     "]}"
                     ].join(""))
             else if node.type == "Identifier"
@@ -60,6 +62,7 @@ compile=(src, settings={})->
         #detect jsunify node type 
         if isJsUnifyCall(node) 
             node.unifyType = "JsUnifyCall"
+            node.unifyIndent = node.loc.start.column
         else if isJsProgramOrExprRoot(node)
             node.unifyType = if node.type == "FunctionExpression" then "ProgramRoot" else "ExprRoot"
             node.isUnifyProg = node.type == "FunctionExpression"
@@ -73,10 +76,13 @@ compile=(src, settings={})->
         else #default to no unify type
             node.unifyType = null
         #set isUnifyProg
-        if node.parent?.isUnifyProg? and not node.isUnifyProg?
+        if node.unifyType != null and node.parent?.isUnifyProg? and not node.isUnifyProg?
             node.isUnifyProg = node.parent.isUnifyProg
+         # set node.unifyIndent
+         if node.unifyType != null and not node.unifyIndent? and node.parent?.unifyIndent?
+            node.unifyIndent = node.parent.unifyIndent
         return
     
-    return falafel(src, {}, depthFirstFn, breathFirstFn).toString()
+    return falafel(src, { loc:true }, depthFirstFn, breathFirstFn).toString()
 
 extern "compile", compile
