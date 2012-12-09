@@ -1,7 +1,6 @@
 falafel = if  window? and window.falafel? then window.falafel else require('./falafel.js')
 
-compile=(src, settings={})->
-
+compile=(src)->
     depthFirstFn = (node)->
         if node.unifyType == null then return
         indent = (new Array(node.unifyIndent + 5)).join(" ")
