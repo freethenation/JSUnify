@@ -1,6 +1,0 @@
-[submodule "submodule/esprima"]
-	path = submodule/esprima
-	url = https://github.com/freethenation/esprima
-[submodule "submodule/node-falafel"]
-	path = submodule/node-falafel
-	url = https://github.com/freethenation/node-falafel.git
