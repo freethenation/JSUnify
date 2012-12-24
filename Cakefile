@@ -1,53 +1,75 @@
-coffee = require 'coffee-script'
 fs = require 'fs'
-log=console.log
-uglify = require "uglify-js"
+funcflow = require 'funcflow'
+_ = require 'underscore'
+flatten = _.flatten
 
-paths=['./src/unify.coffee', './src/JSUnifyRuntime.coffee', './src/JSUnifyCompiler.coffee']
-testPaths=['./tests/unifyTests.coffee', './tests/JSUnifyRuntimeTests.coffee','./tests/JSUnifyCompilerTests.coffee']
-depends=['./submodule/node-falafel/index.js', './submodule/esprima/esprima.js']
-buildTasks={}
-buildTask=(name, desc, callback)->
-    if !callback?
-        callback = desc
-        desc = null
-    buildTasks[name]=()->
-        log "building '#{name}'"
-        callback()
-        log "done!"
-    task 'build:'+name.replace('.js',''),  (if desc? then desc else "builds '#{name}'"), buildTasks[name]
-task 'build', 'does a full build of the project including unit tests', ()->(buildTasks[task]() for task of buildTasks)
+createBuildSteps=(inFile, outFile)->
+    return [
+        (step, err)->readFile(inFile, step.next)
+        (step, err, file)->compile(file, step.next)
+        (step, err, file)->writeFile(outFile, file, step.next)
+        (step, err)->
+            console.log('Compiled "' + outFile + '"!')
+            step.next()
+    ]
+createMinSteps=(inFile, outFile)->
+    return [
+        (step, err)->readFile(inFile, step.next)
+        (step, err, file)->compress(file, step.next)
+        (step, err, file)->writeFile(outFile,  file, step.next)
+        (step, err)->
+            console.log('Compiled "' + outFile + '"!')
+            step.next()
+    ]
+createTestSteps=(inFile, outFile)->
+    return flatten([
+        createBuildSteps(inFile, outFile)
+        (step, err)->
+            console.log('Running "' + outFile + '"!')
+            test(outFile, step.options.exception, step.next)
+        (step, err)->
+            console.log('Ran "' + outFile + '"!')
+            step.next()
+    ])
+    
+buildRuntimeSteps = createBuildSteps('./src/JSUnifyRuntime.coffee', './bin/JSUnifyRuntime.js')
+buildCompilerSteps = createBuildSteps('./src/JSUnifyCompiler.coffee', './bin/JSUnifyCompiler.js')
+buildRuntimeMinSteps = createMinSteps('./bin/JSUnifyRuntime.js', './bin/JSUnifyRuntime.min.js')
+buildCompilerMinSteps = createMinSteps('./bin/JSUnifyCompiler.js', './bin/JSUnifyCompiler.min.js')
+testRuntimeSteps = createTestSteps('./tests/JSUnifyRuntimeTests.coffee', './tests/JSUnifyRuntimeTests.js')
+testCompilerSteps = createTestSteps('./tests/JSUnifyCompilerTests.coffee', './tests/JSUnifyCompilerTests.js')
 
-buildTask 'unify.js', ()->build(paths.slice(0,1),'./bin/unify.js')
-buildTask 'JSUnifyRuntime.js', ()->build(paths.slice(0,2),'./bin/JSUnifyRuntime.js')
-buildTask 'JSUnifyCompiler.js', ()->
-    build(paths.slice(0,3),'./bin/JSUnifyCompiler.js')
-    fs.writeFileSync('./bin/falafel.js', fs.readFileSync('./submodule/node-falafel/index.js', 'utf8'))
-buildTask 'JSUnifyCompilerWithDependencies.js', ()->build(paths.slice(0,3),'./bin/JSUnifyCompilerWithDependencies.js',depends)
-buildTask 'jsunify',  'builds jsunify, a command line compiler for the JSUnify language', ()->build(['./src/jsunify.coffee'],'./bin/jsunify')
+task 'build', 'builds the runtime and compiler', (options)->
+    funcflow(flatten([buildRuntimeSteps, buildCompilerSteps]), {catchExceptions:false, "options":options}, ()->)
 
-buildTask 'unifyTests', ()->build(paths.slice(0,1).concat(testPaths.slice(0,1)), './tests/unifyTests.js')
-buildTask 'JSUnifyRuntimeTests', ()->build(paths.slice(0,2).concat(testPaths.slice(0,2)), './tests/JSUnifyRuntimeTests.js')
-buildTask 'JSUnifyCompilerTests', ()->build(paths.slice(0,3).concat(testPaths.slice(0,3)),'./tests/JSUnifyCompiler.js',depends)
+task 'build:min', 'builds the runtime and compiler and then minifies it', (options)->
+    funcflow(flatten([buildRuntimeSteps, buildCompilerSteps, buildRuntimeMinSteps, buildCompilerMinSteps]), {catchExceptions:false, "options":options}, ()->)
 
-minify=(inputFile)->
+option '-e', '--exception', "don't catch exceptions when running unit tests"
+task 'build:full', 'compiles runtime and compiler, minifies, and runs unit tests', (options)->
+    funcflow(flatten([buildRuntimeSteps, buildCompilerSteps, buildRuntimeMinSteps, buildCompilerMinSteps, testRuntimeSteps, testCompilerSteps]),{catchExceptions:false, "options":options}, ()->)
+    
+task 'test', 'compiles and runs unit tests', (options)->
+    funcflow(flatten([testRuntimeSteps, testCompilerSteps]), {catchExceptions:false, "options":options}, ()->)
+    
+compile = (inputFile, callback) ->
+    coffee = require 'coffee-script'
+    callback?(coffee.compile(inputFile))
+
+compress = (inputFile, callback) ->
+    uglify = require "uglify-js"
     ast = uglify.parser.parse(inputFile); # parse code and get the initial AST
     ast = uglify.uglify.ast_mangle(ast); # get a new AST with mangled names
     ast = uglify.uglify.ast_squeeze(ast); # get an AST with compression optimizations
-    return uglify.uglify.gen_code(ast); # compressed code here
-        
-build=(inputPaths, outputPath, inputJSPaths=[])->
-    outputFile = []
-    for path in inputPaths
-        outputFile.push fs.readFileSync(path, 'utf8')
-        outputFile.push "#File '#{path}'"
-    outputFile = outputFile.join('\n')
-    outputFile = coffee.compile(outputFile)
-    for path in inputJSPaths
-        outputFile = fs.readFileSync(path, 'utf8') + '\n' + outputFile
-    fs.writeFileSync(outputPath, outputFile)
-    outputFile = minify(outputFile)
-    if outputFile? and outputPath.indexOf('.js') > -1 then fs.writeFileSync(outputPath.replace('.js', '.min.js'), outputFile)
+    callback?(uglify.uglify.gen_code(ast))
     
-    
-        
+readFile = (filename, callback) ->
+    data = fs.readFile(filename, 'utf8', (err, data)-> if err then throw err else callback(data))
+ 
+writeFile = (filename, data, callback) ->
+    fs.writeFile(filename, data, 'utf8', (err)-> if err then throw err else callback())
+
+test = (inputFile, throwException, callback) ->
+    tests = require(inputFile)
+    tests.RunAll(throwException)
+    callback()

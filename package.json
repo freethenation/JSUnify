@@ -7,10 +7,11 @@
    "bugs":"https://github.com/freethenation/JSUnify/issues",
    "description":"A javascript unifying rule engine similar to prolog",
    "devDependencies":{
-      "uglify-js":">=1.3.4",
+      "uglify-js":"1.3.0",
       "coffee-script":">=1.4.0",
       "funcflow":">=1.1.0",
-      "deep-equal":">=0.0.0"
+      "deep-equal":">=0.0.0",
+      "underscore":">=1.4.3"
    },
    "dependencies" : {
       "esprima":">=1.0.0",
