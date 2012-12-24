@@ -47,9 +47,11 @@ task 'build:min', 'builds the runtime and compiler and then minifies it', (optio
 
 option '-e', '--exception', "don't catch exceptions when running unit tests"
 task 'build:full', 'compiles runtime and compiler, minifies, and runs unit tests', (options)->
-    funcflow(flatten([buildRuntimeSteps, buildCompilerSteps, buildRuntimeMinSteps, buildCompilerMinSteps, testRuntimeSteps, testCompilerSteps]),{catchExceptions:false, "options":options}, ()->)
+    funcflow(flatten([buildRuntimeSteps, buildCompilerSteps, buildRuntimeMinSteps, buildCompilerMinSteps, testCompilerSteps]),{catchExceptions:false, "options":options}, ()->)
+    #funcflow(flatten([buildRuntimeSteps, buildCompilerSteps, buildRuntimeMinSteps, buildCompilerMinSteps, testRuntimeSteps, testCompilerSteps]),{catchExceptions:false, "options":options}, ()->)
     
 task 'test', 'compiles and runs unit tests', (options)->
+    funcflow(flatten([testRuntimeSteps, testCompilerSteps]), {catchExceptions:false, "options":options}, ()->)
     funcflow(flatten([testRuntimeSteps, testCompilerSteps]), {catchExceptions:false, "options":options}, ()->)
     
 compile = (inputFile, callback) ->
