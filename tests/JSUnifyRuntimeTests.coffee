@@ -91,7 +91,7 @@ test "Illegal rebind", ()->
     @expect(1)
     prog = new Program()
         .rule({number:12})
-        .rule({minus:variable("N1")},
+        .rule({minus:variable("N")},
             {number:variable("N")},
             (tin)->
                 N = tin.get("N")
