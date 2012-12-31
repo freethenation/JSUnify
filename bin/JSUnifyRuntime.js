@@ -1,8 +1,26 @@
 (function() {
-  var FunctionCondition, Program, Rule, backtrack, tryFunctionCondition, tryUnifyCondition,
+  var FunctionCondition, Program, Rule, backtrack, extern, name, tryFunctionCondition, tryUnifyCondition, unify,
     __slice = [].slice,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+  unify = typeof module === 'undefined' ? window.unify : require('unify');
+
+  if (typeof module === 'undefined') {
+    window.JSUnify = {};
+  }
+
+  extern = function(name, o) {
+    if (typeof module === 'undefined') {
+      return window.JSUnify[name] = o;
+    } else {
+      return module.exports[name] = o;
+    }
+  };
+
+  for (name in unify) {
+    extern(name, unify[name]);
+  }
 
   Program = (function() {
 
@@ -56,7 +74,7 @@
       var c, conditions, fact, _i, _len;
       fact = arguments[0], conditions = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
       this.fact = fact;
-      this.tin = parse(fact);
+      this.tin = unify.box(fact);
       this.conditions = [];
       for (_i = 0, _len = conditions.length; _i < _len; _i++) {
         c = conditions[_i];
@@ -66,10 +84,10 @@
 
     Rule.prototype.iff = function(condition) {
       var mergedVarlist, varKey, varValue, _ref, _ref1;
-      if (isfunc(condition)) {
+      if (unify.types.isFunc(condition)) {
         condition = new FunctionCondition(condition);
       } else {
-        condition = parse(condition);
+        condition = unify.box(condition);
       }
       if (this.conditions.length === 0) {
         mergedVarlist = {};
@@ -106,22 +124,13 @@
       FunctionCondition.__super__.constructor.call(this, null, null, {});
     }
 
-    FunctionCondition.prototype.bind = function(var_name, value) {
-      var ver;
-      ver = this.varlist[var_name].end_of_chain();
-      if (ver.isfree()) {
-        ver.node = boxit(value, {});
-        return true;
-      } else if (unboxit(ver.node) === value) {
-        return true;
-      } else {
-        return false;
-      }
+    FunctionCondition.prototype.toString = function() {
+      return "new FunctionCondition(" + (toJson(this.node)) + ", " + (toJson(this.varlist)) + ")";
     };
 
     return FunctionCondition;
 
-  })(Tin);
+  })(unify.TreeTin);
 
   backtrack = function(goals, rules) {
     var goal, ret, rule, _i, _len;
@@ -147,7 +156,7 @@
   tryUnifyCondition = function(goal, rule, goals, rules) {
     var changes, cond, _i, _len, _ref;
     changes = [];
-    if (unify(goal, rule.tin, changes)) {
+    if (goal.unify(rule.tin)) {
       rule.conditions.reverse();
       _ref = rule.conditions;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -161,7 +170,7 @@
         return goal;
       }
     }
-    rollback(changes);
+    goal.rollback();
     return null;
   };
 

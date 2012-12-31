@@ -33,7 +33,18 @@ createTestSteps=(inFile, outFile)->
     ])
     
 buildRuntimeSteps = createBuildSteps('./src/JSUnifyRuntime.coffee', './bin/JSUnifyRuntime.js')
-buildCompilerSteps = createBuildSteps('./src/JSUnifyCompiler.coffee', './bin/JSUnifyCompiler.js')
+buildCompilerSteps = [
+    (step, err)->readFile('./src/JSUnifyRuntime.coffee', step.next)
+    (step, err, file)->
+        step.file = file
+        readFile('./src/JSUnifyCompiler.coffee', step.next)
+    (step, err, file)->step.next(step.file + file)
+    (step, err, file)->compile(file, step.next)
+    (step, err, file)->writeFile('./bin/JSUnifyCompiler.js',  file, step.next)
+    (step, err)->
+        console.log('Compiled "' + './bin/JSUnifyCompiler.js' + '"!')
+        step.next()
+]
 buildRuntimeMinSteps = createMinSteps('./bin/JSUnifyRuntime.js', './bin/JSUnifyRuntime.min.js')
 buildCompilerMinSteps = createMinSteps('./bin/JSUnifyCompiler.js', './bin/JSUnifyCompiler.min.js')
 testRuntimeSteps = createTestSteps('./tests/JSUnifyRuntimeTests.coffee', './tests/JSUnifyRuntimeTests.js')
@@ -47,8 +58,7 @@ task 'build:min', 'builds the runtime and compiler and then minifies it', (optio
 
 option '-e', '--exception', "don't catch exceptions when running unit tests"
 task 'build:full', 'compiles runtime and compiler, minifies, and runs unit tests', (options)->
-    funcflow(flatten([buildRuntimeSteps, buildCompilerSteps, buildRuntimeMinSteps, buildCompilerMinSteps, testCompilerSteps]),{catchExceptions:false, "options":options}, ()->)
-    #funcflow(flatten([buildRuntimeSteps, buildCompilerSteps, buildRuntimeMinSteps, buildCompilerMinSteps, testRuntimeSteps, testCompilerSteps]),{catchExceptions:false, "options":options}, ()->)
+    funcflow(flatten([buildRuntimeSteps, buildCompilerSteps, buildRuntimeMinSteps, buildCompilerMinSteps, testRuntimeSteps, testCompilerSteps]),{catchExceptions:false, "options":options}, ()->)
     
 task 'test', 'compiles and runs unit tests', (options)->
     funcflow(flatten([testRuntimeSteps, testCompilerSteps]), {catchExceptions:false, "options":options}, ()->)

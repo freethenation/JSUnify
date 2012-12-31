@@ -1,3 +1,10 @@
+unify = if typeof module == 'undefined' then window.unify else require('unify')
+if typeof module == 'undefined' then window.JSUnify={}
+extern=(name, o)->if typeof module == 'undefined' then window.JSUnify[name] = o else module.exports[name] = o
+
+for name of unify
+    extern(name, unify[name])
+
 class Program
     constructor: () ->
         @rules=[]
@@ -21,16 +28,16 @@ class Program
 class Rule
     constructor: (fact, conditions...) ->
         @fact = fact
-        @tin = parse(fact)
+        @tin = unify.box(fact)
         @conditions = []
         for c in conditions
             @iff(c)
             
     iff: (condition) ->
-        if isfunc condition
+        if unify.types.isFunc condition
             condition = new FunctionCondition(condition)
         else
-            condition = parse(condition) 
+            condition = unify.box(condition) 
         if @conditions.length == 0
             mergedVarlist = {}
             for varKey, varValue of @tin.varlist
@@ -44,18 +51,10 @@ class Rule
         @conditions.push(condition)
         return this
 
-class FunctionCondition extends Tin
+class FunctionCondition extends unify.TreeTin
     constructor: (@func)->
         super(null, null, {})
-    bind: (var_name, value) ->
-        ver = @varlist[var_name].end_of_chain()
-        if ver.isfree()
-            ver.node = boxit(value,{})
-            return true
-        else if unboxit(ver.node) == value
-            return true
-        else
-            return false
+    toString: ()->"new FunctionCondition(#{ toJson @node }, #{ toJson @varlist})"
 
 backtrack = (goals, rules) ->
     if goals instanceof Rule
@@ -75,7 +74,7 @@ backtrack = (goals, rules) ->
 tryUnifyCondition = (goal, rule, goals, rules)->
     # log("TRY UNIFY: " + toJson(goal) + " AND " + toJson(rule.tin))
     changes = []
-    if unify(goal, rule.tin, changes)
+    if goal.unify(rule.tin)
         # log("UNIFY SUCCESS: " + toJson(goal) + " AND " + toJson(rule.tin))
         rule.conditions.reverse() # RPK: prob should make this a for loop from length-1 to 0
         for cond in rule.conditions
@@ -85,7 +84,7 @@ tryUnifyCondition = (goal, rule, goals, rules)->
             return goal
         else if backtrack(goals, rules) != null
             return goal
-    rollback(changes)
+    goal.rollback()
     return null
     
 tryFunctionCondition = (goal, rule, goals, rules)->

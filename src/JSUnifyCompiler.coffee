@@ -1,4 +1,4 @@
-falafel = if  window? and window.falafel? then window.falafel else require('./falafel.js')
+falafel = if  window? and window.falafel? then window.falafel else require('free-falafel')
 
 compile=(src)->
     depthFirstFn = (node)->
