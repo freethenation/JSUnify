@@ -44,6 +44,19 @@ exports.RunAll = (throwException)->
     return
 
 #File specific test functions
-unifylib=require("../bin/JSUnifyCompiler")
-for prop of unifylib
-    global[prop] = unifylib[prop]
+bin=require("../bin/JSUnifyRuntime")
+for prop of bin
+    global[prop] = bin[prop]
+    
+#######################
+#simple
+#######################
+test "Snowy Chicago", () ->
+    @expect(1)
+    @ok($jsunify(()->
+        snowy(X) == cold(X,Y) && rainy(X,Y)
+        rainy("cinci",1)
+        rainy("chicago",1)
+        cold("chicago",1)
+    ).run($jsunify(snowy(P))).get("P") == "chicago")
+
