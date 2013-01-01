@@ -62,7 +62,6 @@ task 'build:full', 'compiles runtime and compiler, minifies, and runs unit tests
     
 task 'test', 'compiles and runs unit tests', (options)->
     funcflow(flatten([testRuntimeSteps, testCompilerSteps]), {catchExceptions:false, "options":options}, ()->)
-    funcflow(flatten([testRuntimeSteps, testCompilerSteps]), {catchExceptions:false, "options":options}, ()->)
     
 compile = (inputFile, callback) ->
     coffee = require 'coffee-script'
