@@ -24,9 +24,9 @@ compile=(src)->
         else if node.unifyType == "ExprRoot" or node.unifyType == "InCall"
             if node.type == "CallExpression"
                 node.update([
-                    "{#{node.callee.name}:["
+                    "[\"#{node.callee.name}\","
                     (n.source() for n in node.arguments).join(',')
-                    "]}"
+                    "]"
                     ].join(""))
             else if node.type == "Identifier"
                 node.update("Var(\"#{node.name}\")")
@@ -48,7 +48,7 @@ compile=(src)->
                     "&&":"and"
                     "||":"or"
                 if ops[node.operator]?
-                    node.update("{#{ ops[node.operator] }:[#{ node.left.source() }, #{ node.right.source() }]}")
+                    node.update("[\"#{ ops[node.operator] }\", #{ node.left.source() }, #{ node.right.source() }]")
         return
     
     #util functions to detect node types

@@ -21,16 +21,15 @@ createMinSteps=(inFile, outFile)->
             console.log('Compiled "' + outFile + '"!')
             step.next()
     ]
-createTestSteps=(inFile, outFile)->
-    return flatten([
-        createBuildSteps(inFile, outFile)
+createTestSteps=(outFile)->
+    return [
         (step, err)->
             console.log('Running "' + outFile + '"!')
             test(outFile, step.options.exception, step.next)
         (step, err)->
             console.log('Ran "' + outFile + '"!')
             step.next()
-    ])
+    ]
 
 buildRuntimeSteps = createBuildSteps('./src/JSUnifyRuntime.coffee', './bin/JSUnifyRuntime.js')
 buildCompilerSteps = [
@@ -48,8 +47,18 @@ buildCompilerSteps = [
 buildCommandSteps = createBuildSteps('./src/JSUnifyCommand.coffee', './bin/JSUnifyCommand.js')
 buildRuntimeMinSteps = createMinSteps('./bin/JSUnifyRuntime.js', './bin/JSUnifyRuntime.min.js')
 buildCompilerMinSteps = createMinSteps('./bin/JSUnifyCompiler.js', './bin/JSUnifyCompiler.min.js')
-testRuntimeSteps = createTestSteps('./tests/JSUnifyRuntimeTests.coffee', './tests/JSUnifyRuntimeTests.js')
-testCompilerSteps = createTestSteps('./tests/JSUnifyCompilerTests.coffee', './tests/JSUnifyCompilerTests.js')
+testRuntimeSteps = flatten([
+    createBuildSteps('./tests/JSUnifyRuntimeTests.coffee', './tests/JSUnifyRuntimeTests.js')
+    createTestSteps('./tests/JSUnifyRuntimeTests.js')
+])
+testCompilerSteps = flatten([
+    createBuildSteps('./tests/JSUnifyCompilerTests.coffee', './tests/JSUnifyCompilerTests.jsunify')
+    (step, err)->readFile('./tests/JSUnifyCompilerTests.jsunify', step.next)
+    (step, err, file)->
+        JSUnify = require('./bin/JSUnifyCompiler')
+        writeFile('./tests/JSUnifyCompilerTests.js', JSUnify.compile(file), step.next)
+    createTestSteps('./tests/JSUnifyCompilerTests.js')
+])
 
 task 'build', 'builds the runtime and compiler', (options)->
     funcflow(flatten([buildRuntimeSteps, buildCompilerSteps, buildCommandSteps]), {catchExceptions:false, "options":options}, ()->)

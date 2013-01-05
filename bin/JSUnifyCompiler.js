@@ -220,7 +220,7 @@
       } else if (node.unifyType === "ExprRoot" || node.unifyType === "InCall") {
         if (node.type === "CallExpression") {
           node.update([
-            "{" + node.callee.name + ":[", ((function() {
+            "[\"" + node.callee.name + "\",", ((function() {
               var _i, _len, _ref, _results;
               _ref = node["arguments"];
               _results = [];
@@ -229,7 +229,7 @@
                 _results.push(n.source());
               }
               return _results;
-            })()).join(','), "]}"
+            })()).join(','), "]"
           ].join(""));
         } else if (node.type === "Identifier") {
           node.update("Var(\"" + node.name + "\")");
@@ -252,7 +252,7 @@
             "||": "or"
           };
           if (ops[node.operator] != null) {
-            node.update("{" + ops[node.operator] + ":[" + (node.left.source()) + ", " + (node.right.source()) + "]}");
+            node.update("[\"" + ops[node.operator] + "\", " + (node.left.source()) + ", " + (node.right.source()) + "]");
           }
         }
       }

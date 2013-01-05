@@ -44,6 +44,9 @@ exports.RunAll = (throwException)->
     return
 
 #File specific test functions
+# need to override require to load 'jsunify' correctly for unit tests
+require = (name)-> if name == 'jsunify' then module.require('../bin/JSUnifyCompiler') else module.require(name)
+
 bin=require("../bin/JSUnifyRuntime")
 for prop of bin
     global[prop] = bin[prop]
@@ -58,12 +61,14 @@ test "Snowy Chicago", () ->
         rainy("cinci",1)
         rainy("chicago",1)
         cold("chicago",1)
+        return
     ).run($jsunify(snowy(P))).get("P") == "chicago")
 
 test "list decomposition", () ->
     @expect(1)
-    @ok($jsunify(
+    @ok($jsunify(()->
         head(H, [H,$_])
-        tail($T, [_,$T])
+        tail(T, [_,$T])
+        return
     ).run($jsunify(head(HEAD,[1,2,3]))).get("HEAD") == 1)
 
