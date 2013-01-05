@@ -8,7 +8,7 @@ compile=(src)->
             node.update([
                 "(function(){"
                 "var JSUnify = typeof(module) == 'undefined' || typeof(require) == 'undefined' ? window.JSUnify : require('jsunify');"
-                "var Var = JSUnify.Var;"
+                "var $var = JSUnify.variable;"
                 if node.isUnifyProg then "return new JSUnify.Program()\n#{ node.arguments[0].source() }" else "return #{ node.arguments[0].source() };"
                 "})()"
                 ].join("\n" + indent))
@@ -29,7 +29,7 @@ compile=(src)->
                     "]"
                     ].join(""))
             else if node.type == "Identifier"
-                node.update("Var(\"#{node.name}\")")
+                node.update("$var(\"#{node.name}\")")
             else if node.type == "LogicalExpression" or node.type == "BinaryExpression"
                 ops =
                     "+":"add"

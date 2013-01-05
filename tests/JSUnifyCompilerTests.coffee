@@ -65,10 +65,13 @@ test "Snowy Chicago", () ->
     ).run($jsunify(snowy(P))).get("P") == "chicago")
 
 test "list decomposition", () ->
-    @expect(1)
-    @ok($jsunify(()->
+    @expect(2)
+    p = $jsunify(()->
         head(H, [H,$_])
         tail(T, [_,$T])
         return
-    ).run($jsunify(head(HEAD,[1,2,3]))).get("HEAD") == 1)
+    )
+    @deepEqual(p.run($jsunify(head(HEAD,[1,2,3]))).get("HEAD"), 1, "unable to get head")
+    @deepEqual(p.run($jsunify(tail(TAIL,[1,2,3]))).get("TAIL"), [2,3], "unable to get tail")
+    return
 

@@ -16,7 +16,7 @@
    "dependencies" : {
       "esprima":">=1.0.0",
       "free-falafel":">=0.1.5",
-      "unify":">=0.9.6"
+      "unify":">=0.9.7"
     },
    "directories":{
       "lib":"./lib"

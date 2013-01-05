@@ -174,7 +174,7 @@
     return null;
   };
 
-  tryFunctionCondition = function(goal, rule, goals, rules) {
+  tryFunctionCondition = function(goal) {
     if (goal.func(goal)) {
       return goal;
     } else {
@@ -197,7 +197,7 @@
       }
       indent = (new Array(node.unifyIndent + 5)).join(" ");
       if (node.unifyType === "JsUnifyCall") {
-        node.update(["(function(){", "var JSUnify = typeof(module) == 'undefined' || typeof(require) == 'undefined' ? window.JSUnify : require('jsunify');", "var Var = JSUnify.Var;", node.isUnifyProg ? "return new JSUnify.Program()\n" + (node["arguments"][0].source()) : "return " + (node["arguments"][0].source()) + ";", "})()"].join("\n" + indent));
+        node.update(["(function(){", "var JSUnify = typeof(module) == 'undefined' || typeof(require) == 'undefined' ? window.JSUnify : require('jsunify');", "var $var = JSUnify.variable;", node.isUnifyProg ? "return new JSUnify.Program()\n" + (node["arguments"][0].source()) : "return " + (node["arguments"][0].source()) + ";", "})()"].join("\n" + indent));
       } else if (node.unifyType === "ProgramRoot") {
         node.update(node.body.source());
       } else if (node.unifyType === "OutCall") {
@@ -232,7 +232,7 @@
             })()).join(','), "]"
           ].join(""));
         } else if (node.type === "Identifier") {
-          node.update("Var(\"" + node.name + "\")");
+          node.update("$var(\"" + node.name + "\")");
         } else if (node.type === "LogicalExpression" || node.type === "BinaryExpression") {
           ops = {
             "+": "add",

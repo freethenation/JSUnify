@@ -86,8 +86,8 @@ tryUnifyCondition = (goal, rule, goals, rules)->
             return goal
     goal.rollback()
     return null
-    
-tryFunctionCondition = (goal, rule, goals, rules)->
+
+tryFunctionCondition = (goal)->
     if goal.func(goal) then return  goal else null
 
 extern "Rule", Rule

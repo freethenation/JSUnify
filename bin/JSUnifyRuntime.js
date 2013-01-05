@@ -174,7 +174,7 @@
     return null;
   };
 
-  tryFunctionCondition = function(goal, rule, goals, rules) {
+  tryFunctionCondition = function(goal) {
     if (goal.func(goal)) {
       return goal;
     } else {
