@@ -1,4 +1,4 @@
-falafel = if  window? and window.falafel? then window.falafel else require('free-falafel')
+falafel = if typeof(module)=='undefined' then window.falafel else require('free-falafel')
 
 compile=(src)->
     depthFirstFn = (node)->

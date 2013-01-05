@@ -31,34 +31,35 @@ createTestSteps=(inFile, outFile)->
             console.log('Ran "' + outFile + '"!')
             step.next()
     ])
-    
+
 buildRuntimeSteps = createBuildSteps('./src/JSUnifyRuntime.coffee', './bin/JSUnifyRuntime.js')
 buildCompilerSteps = [
     (step, err)->readFile('./src/JSUnifyRuntime.coffee', step.next)
     (step, err, file)->
         step.file = file
         readFile('./src/JSUnifyCompiler.coffee', step.next)
-    (step, err, file)->step.next(step.file + file)
+    (step, err, file)->step.next(step.file + '\n' + file)
     (step, err, file)->compile(file, step.next)
     (step, err, file)->writeFile('./bin/JSUnifyCompiler.js',  file, step.next)
     (step, err)->
         console.log('Compiled "' + './bin/JSUnifyCompiler.js' + '"!')
         step.next()
 ]
+buildCommandSteps = createBuildSteps('./src/JSUnifyCommand.coffee', './bin/JSUnifyCommand.js')
 buildRuntimeMinSteps = createMinSteps('./bin/JSUnifyRuntime.js', './bin/JSUnifyRuntime.min.js')
 buildCompilerMinSteps = createMinSteps('./bin/JSUnifyCompiler.js', './bin/JSUnifyCompiler.min.js')
 testRuntimeSteps = createTestSteps('./tests/JSUnifyRuntimeTests.coffee', './tests/JSUnifyRuntimeTests.js')
 testCompilerSteps = createTestSteps('./tests/JSUnifyCompilerTests.coffee', './tests/JSUnifyCompilerTests.js')
 
 task 'build', 'builds the runtime and compiler', (options)->
-    funcflow(flatten([buildRuntimeSteps, buildCompilerSteps]), {catchExceptions:false, "options":options}, ()->)
+    funcflow(flatten([buildRuntimeSteps, buildCompilerSteps, buildCommandSteps]), {catchExceptions:false, "options":options}, ()->)
 
 task 'build:min', 'builds the runtime and compiler and then minifies it', (options)->
-    funcflow(flatten([buildRuntimeSteps, buildCompilerSteps, buildRuntimeMinSteps, buildCompilerMinSteps]), {catchExceptions:false, "options":options}, ()->)
+    funcflow(flatten([buildRuntimeSteps, buildCompilerSteps, buildCommandSteps, buildRuntimeMinSteps, buildCompilerMinSteps]), {catchExceptions:false, "options":options}, ()->)
 
 option '-e', '--exception', "don't catch exceptions when running unit tests"
 task 'build:full', 'compiles runtime and compiler, minifies, and runs unit tests', (options)->
-    funcflow(flatten([buildRuntimeSteps, buildCompilerSteps, buildRuntimeMinSteps, buildCompilerMinSteps, testRuntimeSteps, testCompilerSteps]),{catchExceptions:false, "options":options}, ()->)
+    funcflow(flatten([buildRuntimeSteps, buildCompilerSteps, buildCommandSteps, buildRuntimeMinSteps, buildCompilerMinSteps, testRuntimeSteps, testCompilerSteps]),{catchExceptions:false, "options":options}, ()->)
     
 task 'test', 'compiles and runs unit tests', (options)->
     funcflow(flatten([testRuntimeSteps, testCompilerSteps]), {catchExceptions:false, "options":options}, ()->)

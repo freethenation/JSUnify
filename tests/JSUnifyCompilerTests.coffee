@@ -60,3 +60,10 @@ test "Snowy Chicago", () ->
         cold("chicago",1)
     ).run($jsunify(snowy(P))).get("P") == "chicago")
 
+test "list decomposition", () ->
+    @expect(1)
+    @ok($jsunify(
+        head(H, [H,$_])
+        tail($T, [_,$T])
+    ).run($jsunify(head(HEAD,[1,2,3]))).get("HEAD") == 1)
+

@@ -1,5 +1,5 @@
 (function() {
-  var FunctionCondition, Program, Programfalafel, Rule, backtrack, compile, extern, name, tryFunctionCondition, tryUnifyCondition, unify,
+  var FunctionCondition, Program, Rule, backtrack, compile, extern, falafel, name, tryFunctionCondition, tryUnifyCondition, unify,
     __slice = [].slice,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -184,7 +184,9 @@
 
   extern("Rule", Rule);
 
-  extern("Program", Programfalafel = (typeof window !== "undefined" && window !== null) && (window.falafel != null) ? window.falafel : require('free-falafel'));
+  extern("Program", Program);
+
+  falafel = typeof module === 'undefined' ? window.falafel : require('free-falafel');
 
   compile = function(src) {
     var breathFirstFn, depthFirstFn, descendantNodeTypes, isJsProgramOrExprRoot, isJsUnifyCall;
