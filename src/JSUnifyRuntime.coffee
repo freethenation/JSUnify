@@ -4,14 +4,23 @@ extern=(name, o)->if typeof module == 'undefined' then window.JSUnify[name] = o 
 
 for name of unify
     extern(name, unify[name])
+    
+class Debugger
+    constructor:(logger)->
+        @level=0
+        @logger=logger
+    event:(name, goal)->
+        if name == "fail" || name == "exit" then @level--
+        @logger.log("#{@level} #{name}: #{goal}")
+        if name == "call" then @level++
 
 class Program
     constructor: () ->
         @rules=[]
-        @settings={}
+        @settings={debug:false}
     run: (goal) ->
         goal = new Rule(goal)
-        return backtrack(goal, @rules)
+        return backtrack(goal, @rules, if @settings.debug then (new Debugger(console)) else {event:()->})
     rule: (fact, conditions...)->
         @rules.push(new Rule(fact, conditions...))
         return this
@@ -54,40 +63,42 @@ class Rule
 class FunctionCondition extends unify.TreeTin
     constructor: (@func)->
         super(null, null, {})
-    toString: ()->"new FunctionCondition(#{ toJson @node }, #{ toJson @varlist})"
-
-backtrack = (goals, rules) ->
+    toString: ()->@func.toString().replace(/(\r\n|\n|\r)/gm,"")  
+    
+backtrack = (goals, rules, debug) ->
     if goals instanceof Rule
         goals = [goals.tin]
     goal = goals.pop()
+    debug.event("call", goal)
     for rule in rules
         if goal instanceof FunctionCondition
-            ret = tryFunctionCondition(goal, rule, goals, rules)
+            ret = tryFunctionCondition(goal, rule, goals, rules, debug)
         else
-            ret = tryUnifyCondition(goal, rule, goals, rules)
+            ret = tryUnifyCondition(goal, rule, goals, rules, debug)
         if ret != null
+            debug.event("exit", goal)
             return ret
-    # log("UNIFY FAILURE... BACKTRACKING")
+    debug.event("fail", goal)
     goals.push(goal)
     return null
     
-tryUnifyCondition = (goal, rule, goals, rules)->
-    # log("TRY UNIFY: " + toJson(goal) + " AND " + toJson(rule.tin))
+tryUnifyCondition = (goal, rule, goals, rules, debug)->
     changes = []
     if goal.unify(rule.tin)
-        # log("UNIFY SUCCESS: " + toJson(goal) + " AND " + toJson(rule.tin))
+        debug.event("call", rule.tin)
         rule.conditions.reverse() # RPK: prob should make this a for loop from length-1 to 0
         for cond in rule.conditions
             goals.push(cond)
         rule.conditions.reverse()
         if goals.length == 0
             return goal
-        else if backtrack(goals, rules) != null
+        else if backtrack(goals, rules, debug) != null
             return goal
+    debug.event("fail", rule.tin)
     goal.rollback()
     return null
 
-tryFunctionCondition = (goal)->
+tryFunctionCondition = (goal, rule, goals, rules, debug)->
     if goal.func(goal) then return  goal else null
 
 extern "Rule", Rule

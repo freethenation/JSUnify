@@ -1,5 +1,5 @@
 (function() {
-  var FunctionCondition, Program, Rule, backtrack, extern, name, tryFunctionCondition, tryUnifyCondition, unify,
+  var Debugger, FunctionCondition, Program, Rule, backtrack, extern, name, tryFunctionCondition, tryUnifyCondition, unify,
     __slice = [].slice,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -22,16 +22,41 @@
     extern(name, unify[name]);
   }
 
+  Debugger = (function() {
+
+    function Debugger(logger) {
+      this.level = 0;
+      this.logger = logger;
+    }
+
+    Debugger.prototype.event = function(name, goal) {
+      if (name === "fail" || name === "exit") {
+        this.level--;
+      }
+      this.logger.log("" + this.level + " " + name + ": " + goal);
+      if (name === "call") {
+        return this.level++;
+      }
+    };
+
+    return Debugger;
+
+  })();
+
   Program = (function() {
 
     function Program() {
       this.rules = [];
-      this.settings = {};
+      this.settings = {
+        debug: false
+      };
     }
 
     Program.prototype.run = function(goal) {
       goal = new Rule(goal);
-      return backtrack(goal, this.rules);
+      return backtrack(goal, this.rules, this.settings.debug ? new Debugger(console) : {
+        event: function() {}
+      });
     };
 
     Program.prototype.rule = function() {
@@ -125,38 +150,42 @@
     }
 
     FunctionCondition.prototype.toString = function() {
-      return "new FunctionCondition(" + (toJson(this.node)) + ", " + (toJson(this.varlist)) + ")";
+      return this.func.toString().replace(/(\r\n|\n|\r)/gm, "");
     };
 
     return FunctionCondition;
 
   })(unify.TreeTin);
 
-  backtrack = function(goals, rules) {
+  backtrack = function(goals, rules, debug) {
     var goal, ret, rule, _i, _len;
     if (goals instanceof Rule) {
       goals = [goals.tin];
     }
     goal = goals.pop();
+    debug.event("call", goal);
     for (_i = 0, _len = rules.length; _i < _len; _i++) {
       rule = rules[_i];
       if (goal instanceof FunctionCondition) {
-        ret = tryFunctionCondition(goal, rule, goals, rules);
+        ret = tryFunctionCondition(goal, rule, goals, rules, debug);
       } else {
-        ret = tryUnifyCondition(goal, rule, goals, rules);
+        ret = tryUnifyCondition(goal, rule, goals, rules, debug);
       }
       if (ret !== null) {
+        debug.event("exit", goal);
         return ret;
       }
     }
+    debug.event("fail", goal);
     goals.push(goal);
     return null;
   };
 
-  tryUnifyCondition = function(goal, rule, goals, rules) {
+  tryUnifyCondition = function(goal, rule, goals, rules, debug) {
     var changes, cond, _i, _len, _ref;
     changes = [];
     if (goal.unify(rule.tin)) {
+      debug.event("call", rule.tin);
       rule.conditions.reverse();
       _ref = rule.conditions;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -166,15 +195,16 @@
       rule.conditions.reverse();
       if (goals.length === 0) {
         return goal;
-      } else if (backtrack(goals, rules) !== null) {
+      } else if (backtrack(goals, rules, debug) !== null) {
         return goal;
       }
     }
+    debug.event("fail", rule.tin);
     goal.rollback();
     return null;
   };
 
-  tryFunctionCondition = function(goal) {
+  tryFunctionCondition = function(goal, rule, goals, rules, debug) {
     if (goal.func(goal)) {
       return goal;
     } else {

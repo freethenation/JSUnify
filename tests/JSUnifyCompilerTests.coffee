@@ -75,3 +75,15 @@ test "list decomposition", () ->
     @deepEqual(p.run($jsunify(tail(TAIL,[1,2,3]))).get("TAIL"), [2,3], "unable to get tail")
     return
 
+test "differentiation", ()->
+    p = $jsunify(()->
+        derive(In, X, 1) == (t)->t.get("In") == t.get("X")
+        derive(In, X, 0) == (t)->types.isNum(t.get("In"))
+        derive(In1+In2, X, Res1 + Res2) == derive(In1, X, Res1) && derive(In2, X, Res2)
+        derive(In1-In2, X, Res1 - Res2) == derive(In1, X, Res1) && derive(In2, X, Res2)
+        derive(In1*In2, X, In1 * Res1 + Res2 * In2) == derive(In1, X, Res2) && derive(In2, X, Res1)
+        derive(In1/In2, X, (In2 * Res1 - In1 * Res2)/In2*In2 ) == derive(In1, X, Res1) && derive(In2, X, Res2)
+        return
+    )
+    p.settings.debug=true
+    # console.log p.run($jsunify(derive(1+"x","x",OUT)))?.get("OUT")
