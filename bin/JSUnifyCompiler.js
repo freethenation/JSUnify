@@ -56,9 +56,21 @@
       var callback;
       query = unify.box(query);
       callback = function(eventName, parms, resumeCallback) {
-        console.log(eventName + ": " + parms.goal.toString());
+        if (eventName === "try") {
+          console.log("try: " + (unify.toJson(parms.goal.unbox())));
+        }
+        if (eventName === "next" && parms.rule !== null) {
+          console.log("next: " + (unify.toJson(parms.rule.tin.unbox())));
+        } else if (eventName === "next") {
+          console.log("next:");
+        }
+        if (eventName === "fail") {
+          console.log("fail " + (unify.toJson(parms.goal.unbox())));
+        }
         if (eventName === "success") {
+          console.log("");
           console.log(query.unbox());
+          console.log("");
         }
         if (resumeCallback !== null) {
           return resumeCallback();
@@ -161,6 +173,10 @@
       return this.func.toString().replace(/(\r\n|\n|\r)/gm, "");
     };
 
+    FunctionCondition.prototype.unbox = function() {
+      return this.toString();
+    };
+
     return FunctionCondition;
 
   })(unify.TreeTin);
@@ -227,12 +243,10 @@
       }
     } else if (satisfyingRule !== null && satisfyingRule.conditions.length !== 0) {
       frameStack.push(new Frame(satisfyingRule.conditions.concat(frame.subgoals)));
-      callback("subgoals", {
-        "goal": goal,
-        "subgoals": frame.subgoals
-      }, null);
       callback("next", {
-        "goal": goal
+        "goal": goal,
+        "subgoals": frame.subgoals,
+        "rule": satisfyingRule
       }, function() {
         return backtrack(rules, frameStack, callback);
       });
@@ -245,7 +259,9 @@
     } else {
       frameStack.push(new Frame(frame.subgoals));
       callback("next", {
-        "goal": goal
+        "goal": goal,
+        "subgoals": null,
+        "rule": satisfyingRule
       }, function() {
         return backtrack(rules, frameStack, callback);
       });
