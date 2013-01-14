@@ -18,9 +18,13 @@ class Program
     constructor: () ->
         @rules=[]
         @settings={debug:false}
-    run: (goal) ->
-        goal = new Rule(goal)
-        return backtrack(goal, @rules, if @settings.debug then (new Debugger(console)) else {event:()->})
+    run: (query) ->
+        query = unify.box(query)
+        callback = (eventName, parms, resumeCallback)->
+            console.log eventName + ": " + parms.goal.toString()
+            if eventName == "success" then console.log query.unbox()
+            if resumeCallback != null then resumeCallback()
+        backtrack(@rules, [new Frame([query])], callback)
     rule: (fact, conditions...)->
         @rules.push(new Rule(fact, conditions...))
         return this
@@ -65,41 +69,56 @@ class FunctionCondition extends unify.TreeTin
         super(null, null, {})
     toString: ()->@func.toString().replace(/(\r\n|\n|\r)/gm,"")  
     
-backtrack = (goals, rules, debug) ->
-    if goals instanceof Rule
-        goals = [goals.tin]
-    goal = goals.pop()
-    debug.event("call", goal)
-    for rule in rules
-        if goal instanceof FunctionCondition
-            ret = tryFunctionCondition(goal, rule, goals, rules, debug)
-        else
-            ret = tryUnifyCondition(goal, rule, goals, rules, debug)
-        if ret != null
-            debug.event("exit", goal)
-            return ret
-    debug.event("fail", goal)
-    goals.push(goal)
-    return null
-    
-tryUnifyCondition = (goal, rule, goals, rules, debug)->
-    changes = []
-    if goal.unify(rule.tin)
-        debug.event("call", rule.tin)
-        rule.conditions.reverse() # RPK: prob should make this a for loop from length-1 to 0
-        for cond in rule.conditions
-            goals.push(cond)
-        rule.conditions.reverse()
-        if goals.length == 0
-            return goal
-        else if backtrack(goals, rules, debug) != null
-            return goal
-    debug.event("fail", rule.tin)
-    goal.rollback()
-    return null
+class Frame
+    constructor: (@subgoals)->
+        @goal = @subgoals.shift()
+        @currentRule = 0
 
-tryFunctionCondition = (goal, rule, goals, rules, debug)->
-    if goal.func(goal) then return  goal else null
+backtrack = (rules, frameStack, callback)->
+    frame = frameStack[frameStack.length-1]
+    goal = frame.goal
+    success = false
+    satisfyingRule = null
+    if frame.currentRule == 0 then callback("try", {"goal":goal}, null) 
+    else 
+        callback("retry", {"goal":goal}, null)
+        goal.rollback()
+    # attempt to satisfy goal
+    if goal instanceof FunctionCondition
+        if frame.currentRule == 0 and goal.func(goal)
+            success = true
+            frame.currentRule++ # if we ever come back to here we need to fail cause a function can not branch
+    else
+        while frame.currentRule < rules.length
+            if goal.unify(rules[frame.currentRule].tin) 
+                success = true
+                satisfyingRule = rules[frame.currentRule]
+                frame.currentRule++ # increment rule so that if search is continued we do not check same rule
+                break
+            frame.currentRule++
+    # if fail to satisfy goal then pop current frame
+    if !success
+        frameStack.pop()
+        if frameStack.length == 0
+            callback("fail", {"goal":goal}, null)
+            callback("done", {"goal":goal}, null)
+        else callback("fail", {"goal":goal}, ()->backtrack(rules, frameStack, callback))
+    # if goal satisfied and satisfying rule has conditions then make new frame with conditions as new subgoals before existing subgoals
+    else if satisfyingRule != null and satisfyingRule.conditions.length != 0
+        frameStack.push(new Frame(satisfyingRule.conditions.concat(frame.subgoals)))
+        callback("subgoals", {"goal":goal, "subgoals": frame.subgoals}, null)
+        callback("next", {"goal":goal}, ()->backtrack(rules, frameStack, callback))
+    # if goal is satisfied and there are no additional subgoals then exit
+    else if frame.subgoals.length == 0
+        callback("success", {"goal":goal}, ()->backtrack(rules, frameStack, callback))        
+    # if goal is satisfied and there are additional subgoals then create a new frame and continue
+    else
+        frameStack.push(new Frame(frame.subgoals))
+        callback("next", {"goal":goal}, ()->backtrack(rules, frameStack, callback))    
+    return
+
+    
+    
 
 extern "Rule", Rule
 extern "Program", Program

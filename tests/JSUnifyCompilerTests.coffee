@@ -86,4 +86,4 @@ test "differentiation", ()->
         return
     )
     p.settings.debug=true
-    # console.log p.run($jsunify(derive(1+"x","x",OUT)))?.get("OUT")
+    console.log p.run($jsunify(derive(1+"x","x",OUT)))?.get("OUT")

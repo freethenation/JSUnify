@@ -1,5 +1,5 @@
 (function() {
-  var Debugger, FunctionCondition, Program, Rule, backtrack, extern, name, tryFunctionCondition, tryUnifyCondition, unify,
+  var Debugger, Frame, FunctionCondition, Program, Rule, backtrack, extern, name, unify,
     __slice = [].slice,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -52,11 +52,19 @@
       };
     }
 
-    Program.prototype.run = function(goal) {
-      goal = new Rule(goal);
-      return backtrack(goal, this.rules, this.settings.debug ? new Debugger(console) : {
-        event: function() {}
-      });
+    Program.prototype.run = function(query) {
+      var callback;
+      query = unify.box(query);
+      callback = function(eventName, parms, resumeCallback) {
+        console.log(eventName + ": " + parms.goal.toString());
+        if (eventName === "success") {
+          console.log(query.unbox());
+        }
+        if (resumeCallback !== null) {
+          return resumeCallback();
+        }
+      };
+      return backtrack(this.rules, [new Frame([query])], callback);
     };
 
     Program.prototype.rule = function() {
@@ -157,58 +165,90 @@
 
   })(unify.TreeTin);
 
-  backtrack = function(goals, rules, debug) {
-    var goal, ret, rule, _i, _len;
-    if (goals instanceof Rule) {
-      goals = [goals.tin];
-    }
-    goal = goals.pop();
-    debug.event("call", goal);
-    for (_i = 0, _len = rules.length; _i < _len; _i++) {
-      rule = rules[_i];
-      if (goal instanceof FunctionCondition) {
-        ret = tryFunctionCondition(goal, rule, goals, rules, debug);
-      } else {
-        ret = tryUnifyCondition(goal, rule, goals, rules, debug);
-      }
-      if (ret !== null) {
-        debug.event("exit", goal);
-        return ret;
-      }
-    }
-    debug.event("fail", goal);
-    goals.push(goal);
-    return null;
-  };
+  Frame = (function() {
 
-  tryUnifyCondition = function(goal, rule, goals, rules, debug) {
-    var changes, cond, _i, _len, _ref;
-    changes = [];
-    if (goal.unify(rule.tin)) {
-      debug.event("call", rule.tin);
-      rule.conditions.reverse();
-      _ref = rule.conditions;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        cond = _ref[_i];
-        goals.push(cond);
-      }
-      rule.conditions.reverse();
-      if (goals.length === 0) {
-        return goal;
-      } else if (backtrack(goals, rules, debug) !== null) {
-        return goal;
-      }
+    function Frame(subgoals) {
+      this.subgoals = subgoals;
+      this.goal = this.subgoals.shift();
+      this.currentRule = 0;
     }
-    debug.event("fail", rule.tin);
-    goal.rollback();
-    return null;
-  };
 
-  tryFunctionCondition = function(goal, rule, goals, rules, debug) {
-    if (goal.func(goal)) {
-      return goal;
+    return Frame;
+
+  })();
+
+  backtrack = function(rules, frameStack, callback) {
+    var frame, goal, satisfyingRule, success;
+    frame = frameStack[frameStack.length - 1];
+    goal = frame.goal;
+    success = false;
+    satisfyingRule = null;
+    if (frame.currentRule === 0) {
+      callback("try", {
+        "goal": goal
+      }, null);
     } else {
-      return null;
+      callback("retry", {
+        "goal": goal
+      }, null);
+      goal.rollback();
+    }
+    if (goal instanceof FunctionCondition) {
+      if (frame.currentRule === 0 && goal.func(goal)) {
+        success = true;
+        frame.currentRule++;
+      }
+    } else {
+      while (frame.currentRule < rules.length) {
+        if (goal.unify(rules[frame.currentRule].tin)) {
+          success = true;
+          satisfyingRule = rules[frame.currentRule];
+          frame.currentRule++;
+          break;
+        }
+        frame.currentRule++;
+      }
+    }
+    if (!success) {
+      frameStack.pop();
+      if (frameStack.length === 0) {
+        callback("fail", {
+          "goal": goal
+        }, null);
+        callback("done", {
+          "goal": goal
+        }, null);
+      } else {
+        callback("fail", {
+          "goal": goal
+        }, function() {
+          return backtrack(rules, frameStack, callback);
+        });
+      }
+    } else if (satisfyingRule !== null && satisfyingRule.conditions.length !== 0) {
+      frameStack.push(new Frame(satisfyingRule.conditions.concat(frame.subgoals)));
+      callback("subgoals", {
+        "goal": goal,
+        "subgoals": frame.subgoals
+      }, null);
+      callback("next", {
+        "goal": goal
+      }, function() {
+        return backtrack(rules, frameStack, callback);
+      });
+    } else if (frame.subgoals.length === 0) {
+      callback("success", {
+        "goal": goal
+      }, function() {
+        return backtrack(rules, frameStack, callback);
+      });
+    } else {
+      frameStack.push(new Frame(frame.subgoals));
+      callback("next", {
+        "goal": goal
+      }, function() {
+        return backtrack(rules, frameStack, callback);
+      });
     }
   };
 
