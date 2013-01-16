@@ -18,23 +18,28 @@ class Program
     constructor: () ->
         @rules=[]
         @settings={debug:false}
-    run: (query) ->
-        query = unify.box(query)
-        callback = (parms, resumeCallback)->
-            if parms.name == "try"
-                console.log "try: #{unify.toJson(parms.goal.unbox())}" 
-            if parms.name == "next" and parms.rule != null
-                console.log "next: #{unify.toJson(parms.rule.tin.unbox())}"
-            else if parms.name == "next"
-                console.log "next:"
-            if parms.name == "fail"
-                console.log "fail #{unify.toJson(parms.goal.unbox())}"
-            if parms.name == "success" 
-                console.log ""
-                console.log unify.toJson(query.unbox())
-                console.log ""
-            if resumeCallback != null then resumeCallback()
-        backtrack(@rules, [new Frame([query])], callback)
+    query: (goals...)->
+        goals = (unify.box(goal) for goal in goals)
+        success = false
+        backtrack(@rules, [new Frame(goals.slice(0))], 
+            (parms, resume)->
+                if parms.name == "success" then success = true 
+                else if resume != null then resume()
+        )
+        if !success then return null
+        else if goals.length == 1 then return goals[0]
+        else return goals
+    queryAsync: (goals, callback)->
+        newCallback = callback
+        if callback == null
+            newCallback=((parms, resume)->if resume != null and parms.name != "success" then resume())
+        else if !@settings.debug
+            newCallback=(parms, resume)->
+                if parms.name == "done" then callback(parms, resume)
+                else if resume != null then resume()
+        goals = (unify.box(goal) for goal in goals)
+        backtrack(@rules, [new Frame(goals.slice(0))], newCallback)
+        return goals
     rule: (fact, conditions...)->
         @rules.push(new Rule(fact, conditions...))
         return this

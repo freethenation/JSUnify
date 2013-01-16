@@ -61,7 +61,7 @@ test "Snowy Chicago", () ->
         .rule({rainy:["cinci",1]})
         .rule({rainy:["chicago",1]})
         .rule({cold:["chicago",1]})
-        .run({snowy:variable("P")}).get("P") == "chicago")
+        .query({snowy:variable("P")}).get("P") == "chicago")
         
 test "Is Int",()->
     @expect(1)
@@ -73,7 +73,7 @@ test "Is Int",()->
             (tin)->
                 X = tin.get("X")
                 return parseInt(X) == X)
-    @ok(prog.run({int:variable("Y")}).get("Y") == 9)
+    @ok(prog.query({int:variable("Y")}).get("Y") == 9)
 
 test "N1 Is N-1",()->
     @expect(1)
@@ -85,7 +85,7 @@ test "N1 Is N-1",()->
                 N = tin.get("N")
                 return tin.bind("N1",N-1)
         )
-    @ok(prog.run({minus:variable("Q")}).get("Q") == 11)
+    @ok(prog.query({minus:variable("Q")}).get("Q") == 11)
 
 test "Illegal rebind", ()->
     @expect(1)
@@ -97,7 +97,7 @@ test "Illegal rebind", ()->
                 N = tin.get("N")
                 return tin.bind("N",N+1)
         )
-    @ok(prog.run({minus:variable("Q")}) == null)
+    @ok(prog.query({minus:variable("Q")}) == null)
 
 test "Family Tree", () ->
     @expect(7)
@@ -126,17 +126,17 @@ test "Family Tree", () ->
     
     prog = new Program().load(rules)
     
-    res = prog.run({"parent":["charles1","george1"]})
-    @ok(res == null)
-    
-    res = prog.run({"parent":["elizabeth",variable("X")]})
-    @ok(res != null)
-    @ok(res.get("X") == "james1")
-    
-    res = prog.run({"mother":["george1",variable("Mom")]})
+    res = prog.query({"mother":["george1",variable("Mom")]})
     @ok(res != null)
     @ok(res.get("Mom") == "sophia")
     
-    res = prog.run({"father":["george1",variable("Dad")]})
+    res = prog.query({"parent":["charles1","george1"]})
+    @ok(res == null)
+    
+    res = prog.query({"parent":["elizabeth",variable("X")]})
+    @ok(res != null)
+    @ok(res.get("X") == "james1")
+    
+    res = prog.query({"father":["george1",variable("Dad")]})
     @ok(res != null)
     @ok(res.get("Dad") == "james1")

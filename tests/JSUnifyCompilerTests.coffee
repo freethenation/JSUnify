@@ -62,7 +62,7 @@ test "Snowy Chicago", () ->
         rainy("chicago",1)
         cold("chicago",1)
         return
-    ).run($jsunify(snowy(P))).get("P") == "chicago")
+    ).query($jsunify(snowy(P))).get("P") == "chicago")
 
 test "list decomposition", () ->
     @expect(2)
@@ -71,11 +71,12 @@ test "list decomposition", () ->
         tail(T, [_,$T])
         return
     )
-    @deepEqual(p.run($jsunify(head(HEAD,[1,2,3]))).get("HEAD"), 1, "unable to get head")
-    @deepEqual(p.run($jsunify(tail(TAIL,[1,2,3]))).get("TAIL"), [2,3], "unable to get tail")
+    @deepEqual(p.query($jsunify(head(HEAD,[1,2,3]))).get("HEAD"), 1, "unable to get head")
+    @deepEqual(p.query($jsunify(tail(TAIL,[1,2,3]))).get("TAIL"), [2,3], "unable to get tail")
     return
 
 test "differentiation", ()->
+    @expect(1)
     p = $jsunify(()->
         derive(In, X, 1) == (t)->t.get("In") == t.get("X")
         derive(In, X, 0) == (t)->types.isNum(t.get("In"))
@@ -85,5 +86,4 @@ test "differentiation", ()->
         derive(In1/In2, X, (In2 * Res1 - In1 * Res2)/In2*In2 ) == derive(In1, X, Res1) && derive(In2, X, Res2)
         return
     )
-    p.settings.debug=true
-    console.log p.run($jsunify(derive(1+6*"x","x",OUT)))?.get("OUT")
+    @deepEqual(p.query($jsunify(derive(1+6*"x","x",OUT))).get("OUT"),['add',0,['add',['mult',6,1],['mult',0,'x']]])

@@ -52,31 +52,64 @@
       };
     }
 
-    Program.prototype.run = function(query) {
-      var callback;
-      query = unify.box(query);
-      callback = function(parms, resumeCallback) {
-        if (parms.name === "try") {
-          console.log("try: " + (unify.toJson(parms.goal.unbox())));
+    Program.prototype.query = function() {
+      var goal, goals, success;
+      goals = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+      goals = (function() {
+        var _i, _len, _results;
+        _results = [];
+        for (_i = 0, _len = goals.length; _i < _len; _i++) {
+          goal = goals[_i];
+          _results.push(unify.box(goal));
         }
-        if (parms.name === "next" && parms.rule !== null) {
-          console.log("next: " + (unify.toJson(parms.rule.tin.unbox())));
-        } else if (parms.name === "next") {
-          console.log("next:");
-        }
-        if (parms.name === "fail") {
-          console.log("fail " + (unify.toJson(parms.goal.unbox())));
-        }
+        return _results;
+      })();
+      success = false;
+      backtrack(this.rules, [new Frame(goals.slice(0))], function(parms, resume) {
         if (parms.name === "success") {
-          console.log("");
-          console.log(unify.toJson(query.unbox()));
-          console.log("");
+          return success = true;
+        } else if (resume !== null) {
+          return resume();
         }
-        if (resumeCallback !== null) {
-          return resumeCallback();
+      });
+      if (!success) {
+        return null;
+      } else if (goals.length === 1) {
+        return goals[0];
+      } else {
+        return goals;
+      }
+    };
+
+    Program.prototype.queryAsync = function(goals, callback) {
+      var goal, newCallback;
+      newCallback = callback;
+      if (callback === null) {
+        newCallback = (function(parms, resume) {
+          if (resume !== null && parms.name !== "success") {
+            return resume();
+          }
+        });
+      } else if (!this.settings.debug) {
+        newCallback = function(parms, resume) {
+          if (parms.name === "done") {
+            return callback(parms, resume);
+          } else if (resume !== null) {
+            return resume();
+          }
+        };
+      }
+      goals = (function() {
+        var _i, _len, _results;
+        _results = [];
+        for (_i = 0, _len = goals.length; _i < _len; _i++) {
+          goal = goals[_i];
+          _results.push(unify.box(goal));
         }
-      };
-      return backtrack(this.rules, [new Frame([query])], callback);
+        return _results;
+      })();
+      backtrack(this.rules, [new Frame(goals.slice(0))], newCallback);
+      return goals;
     };
 
     Program.prototype.rule = function() {
