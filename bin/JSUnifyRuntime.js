@@ -47,26 +47,26 @@
       backtrack(this.rules, [new Frame(goals.slice(0))], this.settings.debug ? function(parms, resume) {
         var _base, _name;
         if (typeof (_base = {
-          "try": function() {
-            return console.log("try: " + (unify.toJson(parms.goal.unbox())));
+          "try": function(name) {
+            return this.fail(name);
           },
-          "retry": function() {
-            return console.log("retry: " + (unify.toJson(parms.goal.unbox())));
+          "retry": function(name) {
+            return this.fail(name);
           },
-          "next": function() {
-            return console.log("next: " + (parms.rule !== null ? unify.toJson(parms.rule.tin.unbox()) : void 0));
+          "match": function(name) {
+            return console.log("" + name + ": " + (parms.rule !== null ? unify.toJson(parms.rule.tin.unbox()) : void 0));
           },
-          "fail": function() {
-            return console.log("fail: " + (unify.toJson(parms.goal.unbox())));
+          "fail": function(name) {
+            return console.log("" + name + ": " + (unify.toJson(parms.goal.unbox())));
           },
-          "done": function() {
-            return console.log("done:");
+          "done": function(name) {
+            return this.fail(name);
           },
-          "success": function() {
-            return console.log("success:");
+          "success": function(name) {
+            return this.match(name);
           }
         })[_name = parms.name] === "function") {
-          _base[_name]();
+          _base[_name](parms.name);
         }
         if (parms.name === "success") {
           return success = true;
@@ -282,10 +282,6 @@
       frameStack.pop();
       if (frameStack.length === 0) {
         callback({
-          "name": "fail",
-          "goal": goal
-        }, null);
-        callback({
           "name": "done",
           "goal": goal
         }, null);
@@ -300,7 +296,7 @@
     } else if (frame.satisfyingRule !== null && frame.satisfyingRule.conditions.length !== 0) {
       frameStack.push(new Frame(frame.satisfyingRule.conditions.concat(frame.subgoals)));
       callback({
-        "name": "next",
+        "name": "match",
         "goal": goal,
         "subgoals": frame.subgoals,
         "rule": frame.satisfyingRule
@@ -310,14 +306,15 @@
     } else if (frame.subgoals.length === 0) {
       callback({
         "name": "success",
-        "goal": goal
+        "goal": goal,
+        "rule": frame.satisfyingRule
       }, function() {
         return backtrack(rules, frameStack, callback);
       });
     } else {
       frameStack.push(new Frame(frame.subgoals));
       callback({
-        "name": "next",
+        "name": "match",
         "goal": goal,
         "subgoals": null,
         "rule": frame.satisfyingRule
