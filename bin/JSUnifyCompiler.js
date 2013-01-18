@@ -1,5 +1,5 @@
 (function() {
-  var Debugger, Frame, FunctionCondition, Program, Rule, backtrack, compile, extern, falafel, name, unify,
+  var Frame, FunctionCondition, Program, Rule, backtrack, compile, extern, falafel, name, unify,
     __slice = [].slice,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -21,27 +21,6 @@
   for (name in unify) {
     extern(name, unify[name]);
   }
-
-  Debugger = (function() {
-
-    function Debugger(logger) {
-      this.level = 0;
-      this.logger = logger;
-    }
-
-    Debugger.prototype.event = function(name, goal) {
-      if (name === "fail" || name === "exit") {
-        this.level--;
-      }
-      this.logger.log("" + this.level + " " + name + ": " + goal);
-      if (name === "call") {
-        return this.level++;
-      }
-    };
-
-    return Debugger;
-
-  })();
 
   Program = (function() {
 
@@ -65,7 +44,36 @@
         return _results;
       })();
       success = false;
-      backtrack(this.rules, [new Frame(goals.slice(0))], function(parms, resume) {
+      backtrack(this.rules, [new Frame(goals.slice(0))], this.settings.debug ? function(parms, resume) {
+        var _base, _name;
+        if (typeof (_base = {
+          "try": function() {
+            return console.log("try: " + (unify.toJson(parms.goal.unbox())));
+          },
+          "retry": function() {
+            return console.log("retry: " + (unify.toJson(parms.goal.unbox())));
+          },
+          "next": function() {
+            return console.log("next: " + (parms.rule !== null ? unify.toJson(parms.rule.tin.unbox()) : void 0));
+          },
+          "fail": function() {
+            return console.log("fail: " + (unify.toJson(parms.goal.unbox())));
+          },
+          "done": function() {
+            return console.log("done:");
+          },
+          "success": function() {
+            return console.log("success:");
+          }
+        })[_name = parms.name] === "function") {
+          _base[_name]();
+        }
+        if (parms.name === "success") {
+          return success = true;
+        } else if (resume !== null) {
+          return resume();
+        }
+      } : function(parms, resume) {
         if (parms.name === "success") {
           return success = true;
         } else if (resume !== null) {
@@ -225,6 +233,7 @@
 
     function Frame(subgoals) {
       this.subgoals = subgoals;
+      this.subgoals = this.subgoals.slice(0);
       this.goal = this.subgoals.shift();
       this.ruleIndex = 0;
       this.satisfyingRule = null;
@@ -246,11 +255,11 @@
         "goal": goal
       }, null);
     } else {
+      goal.rollback();
       callback({
         "name": "retry",
         "goal": goal
       }, null);
-      goal.rollback();
     }
     if (goal instanceof FunctionCondition) {
       if (frame.ruleIndex === 0 && goal.func(goal)) {

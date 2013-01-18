@@ -96,6 +96,6 @@ writeFile = (filename, data, callback) ->
 
 test = (inputFile, throwException, callback) ->
     tests = require(inputFile)
-    tests.RunAll(throwException)
-    # tests["differentiation"]()
+    # tests.RunAll(throwException)
+    tests["Family Tree"]?()
     callback()

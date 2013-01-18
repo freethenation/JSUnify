@@ -4,15 +4,6 @@ extern=(name, o)->if typeof module == 'undefined' then window.JSUnify[name] = o 
 
 for name of unify
     extern(name, unify[name])
-    
-class Debugger
-    constructor:(logger)->
-        @level=0
-        @logger=logger
-    event:(name, goal)->
-        if name == "fail" || name == "exit" then @level--
-        @logger.log("#{@level} #{name}: #{goal}")
-        if name == "call" then @level++
 
 class Program
     constructor: () ->
@@ -21,8 +12,19 @@ class Program
     query: (goals...)->
         goals = (unify.box(goal) for goal in goals)
         success = false
-        backtrack(@rules, [new Frame(goals.slice(0))], 
-            (parms, resume)->
+        backtrack(@rules, [new Frame(goals.slice(0))],
+            if @settings.debug then (parms, resume)->
+                {
+                    "try":()->console.log "try: #{unify.toJson(parms.goal.unbox())}"
+                    "retry":()->console.log "retry: #{unify.toJson(parms.goal.unbox())}"
+                    "next":()->console.log "next: #{if parms.rule != null then unify.toJson(parms.rule.tin.unbox())}"
+                    "fail":()->console.log "fail: #{unify.toJson(parms.goal.unbox())}"
+                    "done":()->console.log "done:"
+                    "success":()->console.log "success:"
+                }[parms.name]?()
+                if parms.name == "success" then success = true 
+                else if resume != null then resume()
+            else (parms, resume)->
                 if parms.name == "success" then success = true 
                 else if resume != null then resume()
         )
@@ -89,6 +91,7 @@ class FunctionCondition extends unify.TreeTin
     
 class Frame
     constructor: (@subgoals)->
+        @subgoals = @subgoals.slice(0)
         @goal = @subgoals.shift()
         @ruleIndex = 0
         @satisfyingRule = null
@@ -100,8 +103,8 @@ backtrack = (rules, frameStack, callback)->
     frame.satisfyingRule = null
     if frame.ruleIndex == 0 then callback({"name":"try", "goal":goal}, null) 
     else 
-        callback({"name":"retry", "goal":goal}, null)
         goal.rollback()
+        callback({"name":"retry", "goal":goal}, null)
     # attempt to satisfy goal
     if goal instanceof FunctionCondition
         if frame.ruleIndex == 0 and goal.func(goal)

@@ -125,6 +125,7 @@ test "Family Tree", () ->
     rules.push(new Rule({"mother":[variable("Kid"),variable("Mom")]}, {"female":[variable("Mom")]}, {"parent":[variable("Kid"),variable("Mom")]}))
     
     prog = new Program().load(rules)
+    prog.settings.debug=true
     
     res = prog.query({"mother":["george1",variable("Mom")]})
     @ok(res != null)
