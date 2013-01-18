@@ -45,28 +45,13 @@
       })();
       success = false;
       backtrack(this.rules, [new Frame(goals.slice(0))], this.settings.debug ? function(parms, resume) {
-        var _base, _name;
-        if (typeof (_base = {
-          "try": function(name) {
-            return this.fail(name);
-          },
-          "retry": function(name) {
-            return this.fail(name);
-          },
-          "match": function(name) {
-            return console.log("" + name + ": " + (parms.rule !== null ? unify.toJson(parms.rule.tin.unbox()) : void 0));
-          },
-          "fail": function(name) {
-            return console.log("" + name + ": " + (unify.toJson(parms.goal.unbox())));
-          },
-          "done": function(name) {
-            return this.fail(name);
-          },
-          "success": function(name) {
-            return this.match(name);
-          }
-        })[_name = parms.name] === "function") {
-          _base[_name](parms.name);
+        switch (parms.name) {
+          case "match":
+          case "success":
+            console.log("" + parms.depth + " " + parms.name + ": " + (parms.rule !== null ? unify.toJson(parms.rule.tin.unbox()) : void 0));
+            break;
+          default:
+            console.log("" + parms.depth + " " + parms.name + ": " + (unify.toJson(parms.goal.unbox())));
         }
         if (parms.name === "success") {
           return success = true;
@@ -252,13 +237,15 @@
     if (frame.ruleIndex === 0) {
       callback({
         "name": "try",
-        "goal": goal
+        "goal": goal,
+        "depth": frameStack.length
       }, null);
     } else {
       goal.rollback();
       callback({
         "name": "retry",
-        "goal": goal
+        "goal": goal,
+        "depth": frameStack.length
       }, null);
     }
     if (goal instanceof FunctionCondition) {
@@ -283,12 +270,14 @@
       if (frameStack.length === 0) {
         callback({
           "name": "done",
-          "goal": goal
+          "goal": goal,
+          "depth": frameStack.length
         }, null);
       } else {
         callback({
           "name": "fail",
-          "goal": goal
+          "goal": goal,
+          "depth": frameStack.length
         }, function() {
           return backtrack(rules, frameStack, callback);
         });
@@ -299,7 +288,8 @@
         "name": "match",
         "goal": goal,
         "subgoals": frame.subgoals,
-        "rule": frame.satisfyingRule
+        "rule": frame.satisfyingRule,
+        "depth": frameStack.length
       }, function() {
         return backtrack(rules, frameStack, callback);
       });
@@ -307,7 +297,8 @@
       callback({
         "name": "success",
         "goal": goal,
-        "rule": frame.satisfyingRule
+        "rule": frame.satisfyingRule,
+        "depth": frameStack.length
       }, function() {
         return backtrack(rules, frameStack, callback);
       });
@@ -317,7 +308,8 @@
         "name": "match",
         "goal": goal,
         "subgoals": null,
-        "rule": frame.satisfyingRule
+        "rule": frame.satisfyingRule,
+        "depth": frameStack.length
       }, function() {
         return backtrack(rules, frameStack, callback);
       });

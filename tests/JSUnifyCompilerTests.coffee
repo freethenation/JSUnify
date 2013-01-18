@@ -76,7 +76,7 @@ test "list decomposition", () ->
     return
 
 test "differentiation", ()->
-    @expect(1)
+    @expect(2)
     p = $jsunify(()->
         derive(In, X, 1) == (t)->t.get("In") == t.get("X")
         derive(In, X, 0) == (t)->types.isNum(t.get("In"))
@@ -86,4 +86,5 @@ test "differentiation", ()->
         derive(In1/In2, X, (In2 * Res1 - In1 * Res2)/In2*In2 ) == derive(In1, X, Res1) && derive(In2, X, Res2)
         return
     )
-    @deepEqual(p.query($jsunify(derive(1+6*"x","x",OUT))).get("OUT"),['add',0,['add',['mult',6,1],['mult',0,'x']]])
+    @deepEqual(p.query($jsunify(derive(1+6*"x","x",OUT))).get("OUT"),$jsunify(0+(6*1+0*"x")))
+    @deepEqual(p.query($jsunify(derive(1+5/"x","x",OUT))).get("OUT"),$jsunify(0+("x"*0-5*1)/"x"*"x"))
