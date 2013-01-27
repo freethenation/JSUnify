@@ -88,3 +88,23 @@ test "differentiation", ()->
     )
     @deepEqual(p.query($jsunify(derive(1+6*"x","x",OUT))).get("OUT"),$jsunify(0+(6*1+0*"x")))
     @deepEqual(p.query($jsunify(derive(1+5/"x","x",OUT))).get("OUT"),$jsunify(0+("x"*0-5*1)/"x"*"x"))
+
+###    
+test "simplification", ()->
+    @expect(1)
+    p = $jsunify(()->
+        isNum(I) == (t)->return types.isNum(t.get("I"))
+        isStr(I) == (t)->return types.isStr(t.get("I"))
+        simplify(I1+I2,Out) == (t)-> # add
+            I1=t.get("I1")
+            I2=t.get("I2")
+            if !types.isNum(I1) or !types.isNum(I2) then return false
+            t.bind("Out",I1+I2)
+            return true
+        simplify(I+0,I) # identity
+        simplify(I1+(I2+I3),O) == simplify((I1+I2)+I3,O) # associative
+        return
+    )
+    p.settings.debug=true
+    @deepEqual(p.query($jsunify(simplify(1+2+"x",OUT))).get("OUT"),$jsunify(8+"x"))
+###
