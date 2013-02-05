@@ -21,7 +21,7 @@ JSUnify is under active development and is currently in beta and should not be u
 JSUnify is very good at some tasks. AI, symbolic math, and expert systems are all excellent uses for JSUnify. These tasks are not easy to achieve in an imperative language such as JavaScript. JSUnify is not good at IO, DOM manipulation, or really anything easily done easily in an imperative language like JavaScript. That is why JSUnify is a DSL (domain specific language) you can you JSUnify where it makes sense and JavaScript every where else.
 
 # Fact, Rules and Queries
-JSUnify programs consist of three main components, facts, rules, and queries. Facts and rules are combined in order to make a knowlage base. You use a JSUnify program by querying a knowlage base.
+JSUnify programs consist of three main components, facts, rules, and queries. Facts and rules are combined in order to make a knowledge base. You use a JSUnify program by querying a knowledge base.
 
 ### Example 1
 This first knowledge base is simply a collection of facts.
@@ -34,7 +34,7 @@ var knowlagebase = $jsunify(function(){
 });
 ```
 
-The above code creates a knowlage base containing three facts. The first and last line in the example will be explained later. So how do we use this knowlage base? We query it like so!
+The above code creates a knowledge base containing three facts. The first and last line in the example will be explained later. So how do we use this knowledge base? We query it like so!
 
 ```javascript
 if (knowlagebase.query($jsunify(man("frank")))) {
@@ -51,11 +51,11 @@ if (knowlagebase.query($jsunify(man("sue")))) {
 else { console.log("sue is NOT a man!") }
 ```
 
-Ok, I think the queries above are farily obvious. In the first example we are asking if there is a man in named frank aka `man("frank")`. There is so the console should display "frank is a man!". The second example asks if there is a man named sue. There is not so "sue is NOT a man!" is written to the console.
+Ok, I think the queries above are fairly obvious. In the first example we are asking if there is a man in named frank aka `man("frank")`. There is so the console should display "frank is a man!". The second example asks if there is a man named sue. There is not so "sue is NOT a man!" is written to the console.
 
 ### A note about the `$jsunify` function
 
-As mentioned before JSUnify includes a compier. The compiler is optional and does not have to be used but provides syntactic sugar making significantly easer to write and read JSUnify programs. The `$jsunify` function is a flag that tells the compiler to process the code inside of the `$jsunify` function call. If the code inside of the `$jsunify` function call is an anonymous function then the code is compiled to a JSUnify program. If the code is simply an expression it is compiled to JSUnify's json format. This is mainly used to create quires.
+As mentioned before JSUnify includes a complier. The compiler is optional and does not have to be used but provides syntactic sugar making significantly easer to write and read JSUnify programs. The `$jsunify` function is a flag that tells the compiler to process the code inside of the `$jsunify` function call. If the code inside of the `$jsunify` function call is an anonymous function then the code is compiled to a JSUnify program. If the code is simply an expression it is compiled to JSUnify's json format. This is mainly used to create quires.
 
 ### Example 2
 
@@ -132,3 +132,6 @@ else { console.log("There are NOT ANY good drivers!") }
 //   returns the value bound to X in the query after the query is a success.
 ```
 
+### A note about JSUnify and proof search
+
+JSUnify attempts to satisfy a query(aka goal) by looking at each rule/fact in order (from top to bottom) and unifying that rule/fact with the goal. If you are unfamiliar with unification I suggest you read the [documentation for unify.js](https://github.com/freethenation/unify.js) (the library JSUnify uses to preform unification). If the goal unifies successfully  with a rule then the rule's conditions become the new goals. If the rule has no conditions (aka its a fact) then no new goals are created the the query succeeds. I think an example is in order.
