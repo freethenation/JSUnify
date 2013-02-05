@@ -46,7 +46,7 @@
       "type":"git",
       "url":"git://github.com/freethenation/JSUnify.git"
    },
-   "version":"0.8.0",
+   "version":"0.0.4",
     "scripts": {
       "test": "cake -e build:full" 
     }

@@ -111,5 +111,3 @@ else { console.log("frank is NOT a good driver!") }
 //4) JSUnify, NOT satisfying all the conditions, failes to resolve the query.
 //5) "frank is NOT a good driver!" is printed to the console.
 ```
-
-
