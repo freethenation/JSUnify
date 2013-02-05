@@ -85,7 +85,7 @@ else { console.log("bob can NOT drive!") }
 //This example should print "bob can drive!" to the console.
 ```
 
-Now look at the rule `goodDriver(X) == man(X) && hasCar(X);`. Notice that this line has two conditions to the body of the rule, `man(X)` and `hasCar(X)`. This line also introduces variables. In the rule `X` is a variable and can be bound to a value. For example if you queried `goodDriver("bob")` `X` would be bound to `"bob"`and the rule after binding would look like `goodDriver("bob") == man("bob") && hasCar("bob")`. Similarly if you queried  `goodDriver("frank")` `X` would be bound to `"frank"` and the rule after binding would look like `goodDriver("frank") == man("frank") && hasCar("frank")`.
+Now look at the rule `goodDriver(X) == man(X) && hasCar(X);`. Notice that this line has two conditions to the body of the rule, `man(X)` and `hasCar(X)`. This line also introduces variables. In the rule `X` is a variable and can be bound to a value.
 
 ```javascript
 if (knowlagebase.query($jsunify(goodDriver("bob")))) {
@@ -93,7 +93,8 @@ if (knowlagebase.query($jsunify(goodDriver("bob")))) {
 }
 else { console.log("bob is NOT a good driver!") }
 //1) JSUnify finds the rule goodDriver(X) == man(X) && hasCar(X);
-//   and binds X to "bob".
+//   and binds X to "bob" essentially introducing the rule 
+//   goodDriver("bob") == man("bob") && hasCar("bob") to the database.
 //2) JSUnify tries to satisfy the first condition man("bob") and succeeds
 //3) JSUnify tries to satisfy the second condition hasCar("bob") and succeeds
 //4) JSUnify, satisfying all the conditions, asserts goodDriver("bob")
@@ -105,9 +106,29 @@ if (knowlagebase.query($jsunify(goodDriver("frank")))) {
 }
 else { console.log("frank is NOT a good driver!") }
 //1) JSUnify finds the rule goodDriver(X) == man(X) && hasCar(X);
-//   and binds X to "frank".
+//   and binds X to "frank" essentially introducing the rule 
+//   goodDriver("frank") == man("frank") && hasCar("frank") to the database.
 //2) JSUnify tries to satisfy the first condition man("frank") and succeeds
 //3) JSUnify tries to satisfy the second condition hasCar("frank") and fails
 //4) JSUnify, NOT satisfying all the conditions, failes to resolve the query.
 //5) "frank is NOT a good driver!" is printed to the console.
 ```
+
+Variables can also be used in queries. For example lets say you wanted to know who is a good driver.
+
+```javascript
+var res = knowlagebase.query($jsunify(goodDriver(X)));
+if (res) {
+  console.log(res.get("X") + " is a good driver!");
+}
+else { console.log("There are NOT ANY good drivers!") }
+//1) JSUnify finds the rule goodDriver(X) == man(X) && hasCar(X);
+//2) JSUnify tries to satisfy the first condition man(X) and succeeds by
+//   binding X to "bob" and matching the man("bob")
+//3) JSUnify tries to satisfy the second condition hasCar("bob"). Remember 
+//   X has been bound to "bob".
+//4) JSUnify, satisfying all the conditions, asserts goodDriver("bob")
+//5) "bob is a good driver!" is printed to the console. Note: res.get("X")
+//   returns the value bound to X in the query after the query is a success.
+```
+
