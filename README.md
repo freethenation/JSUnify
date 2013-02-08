@@ -16,6 +16,8 @@ JSUnify is under active development and is currently in beta and should not be u
 * A standard library
 * Library loading
 * Or operator in rules
+* Finish command line tool
+* Finish this README
 
 # Why use JSUnify?
 JSUnify is very good at some tasks. AI, symbolic math, and expert systems are all excellent uses for JSUnify. These tasks are not easy to achieve in an imperative language such as JavaScript. JSUnify is not good at IO, DOM manipulation, or really anything easily done easily in an imperative language like JavaScript. That is why JSUnify is a DSL (domain specific language) you can you JSUnify where it makes sense and JavaScript every where else.
@@ -134,4 +136,31 @@ else { console.log("There are NOT ANY good drivers!") }
 
 ### A note about JSUnify and proof search
 
-JSUnify attempts to satisfy a query(aka goal) by looking at each rule/fact in order (from top to bottom) and unifying that rule/fact with the goal. If you are unfamiliar with unification I suggest you read the [documentation for unify.js](https://github.com/freethenation/unify.js) (the library JSUnify uses to preform unification). If the goal unifies successfully  with a rule then the rule's conditions become the new goals. If the rule has no conditions (aka its a fact) then no new goals are created the the query succeeds. I think an example is in order.
+JSUnify attempts to satisfy a query(aka goal) by looking at each rule/fact in order (from top to bottom) and unifying that rule/fact with the goal. If you are unfamiliar with unification I suggest you read the [documentation for unify.js](https://github.com/freethenation/unify.js) (the library JSUnify uses to preform unification). If the goal unifies successfully with a rule then the rule's conditions become the new goals. If the rule has no conditions (aka its a fact) then no new goals are created and the query succeeds. I think an example is in order.
+
+### Example 3
+
+```javascript
+var knowlagebase = $jsunify(function(){
+    snowy(X) == rainy(X,Y) && cold(X,Z); //rule 1
+    rainy("cinci", "very");              //rule 2
+    rainy("chicago", "little");          //rule 3
+    cold("chicago", "really");           //rule 4
+});
+var res = knowlagebase.query($jsunify(snowy(K)));
+if (res) {
+  console.log("Its snowy in " + res.get("K"));
+}
+else { console.log("Its NOT snowy anywhere!"); }
+```
+
+Alright, a trace of JSUnify's proof search:
+
+1. `snowy(K)` is added to the list of goals
+2. The goal `snowy(K)` is satisfied by rule 1 and its two conditions (`rainy(X,Y)` and `cold(X,Y)`) become the new goals.
+3. The goal `rainy(X,Y)` is satisfied by rule 2 binding `X` to `"cinci"` and `Y` to `"very"`.
+4. Because there are no conditions JSUnify moves to the next goal, `cold("cinci",Z)` (Remember X was bound to "cinci").
+5. The goal `cold("cinci",Z)` can not be satisfied so JSUnify backtracks and negates steps 3 and 4 instead satisfying `rainy(X,Y)` with rule 3.
+6. Because there are no conditions JSUnify moves to the next goal, `cold("chicago",Z)`.
+7. The goal `cold("chicago",Z)` is satisfied using rule 4.
+8. There are no more goals so the search is complete!
